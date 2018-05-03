@@ -51,7 +51,7 @@ classdef fockpst < fockobj
       %
       % returns:
       %   obj - A ket representing the phrase structure tree.
-      f = fockpst.fromCellArray(ca);                                           % Create fockobj
+      f = fockpst.fromCellArray(ca);                                            % Create fockobj
       obj = obj@fockobj();                                                      % Invoke superclass constructor
       obj.data = f.data;                                                        % Copy data
     end

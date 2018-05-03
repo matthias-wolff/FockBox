@@ -158,7 +158,7 @@ classdef fockspace < matlab.mixin.CustomDisplay
       if (n==m)                                                                 % All basis vectors in one sector >>
         n=2;                                                                    %   Hilbert space + vacuum space
       else                                                                      % << Not all in one sector >>
-        n=n+1;                                                                  %   #sectors = max. #tensor prods. +1
+        n=n+2;                                                                  %   #sectors = max. #tensor prods. +1
       end                                                                       % <<
     end
 
@@ -422,10 +422,13 @@ classdef fockspace < matlab.mixin.CustomDisplay
           fprintf('<strong>custom</strong>\n');
         end
         fprintf('\n');
-        keys = obj.bidm.keys;
-        for i=1:length(keys)
-          fprintf('    %-20s\t%d\n',keys{i},obj.bidm(keys{i}));
+        for i=1:length(obj.bid)
+          fprintf('    %-20s\t%d\n',obj.bid{i},i);
         end
+        %keys = obj.bidm.keys;
+        %for i=1:length(keys)
+        %  fprintf('    %-20s\t%d\n',keys{i},obj.bidm(keys{i}));
+        %end
       end
     end
     

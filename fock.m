@@ -110,6 +110,17 @@
   % == Public static methods
   methods(Static)
 
+    function addFockBoxPaths()
+      % Adds sub-folders in FockBox to Matlab path.
+      %
+      %   fock.addFockBoxPaths()
+      %
+      p = strrep(mfilename('fullpath'),mfilename,'');
+      addpath([p 'example_utils']);
+      addpath([p 'examples']);
+      addpath([p 'external']);
+    end
+    
     function s=HREF(identifier)
       % Creates a hypertext link to a help page.
       % The returned string can be used for console printouts.

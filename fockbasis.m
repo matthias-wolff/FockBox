@@ -1,6 +1,6 @@
-classdef fockspace < matlab.mixin.CustomDisplay
-  % A Fock space defines a set of orthonormal basis vectors, each bearing a 
-  % unique identifier. Fock spaces can be added (vector sum)
+classdef fockbasis < matlab.mixin.CustomDisplay
+  % A Fock basis defines a set of orthonormal basis vectors, each bearing a 
+  % unique identifier. Fock bases can be added (vector sum)
   % 
   %   F = F1 + F2, 
   %
@@ -8,9 +8,6 @@ classdef fockspace < matlab.mixin.CustomDisplay
   % of F1 and F2 are disjoint, and multiplied (tensor product) 
   %
   %   F = [F1 F2]
-  %
-  % Practical computations are usually not executed on Fock spaces but on
-  % objects (scalars, kets, bras, and linear operators) living in the space.
   %
   % Check out the 'example_*.mlx' live scrips to get started.
   %
@@ -37,10 +34,10 @@ classdef fockspace < matlab.mixin.CustomDisplay
   % == Public constructors and instance getters ==
   methods
     
-    function obj=fockspace(V)
-      % Creates a Fock space.
+    function obj=fockbasis(V)
+      % Creates a Fock subspace basis.
       %
-      %   obj=fockspace(V)
+      %   obj=fockbasis(V)
       %
       % arguments:
       %   V   - A vector of basis vector identifiers or a vector of fockobj.
@@ -83,18 +80,18 @@ classdef fockspace < matlab.mixin.CustomDisplay
       obj = obj.reindex();                                                      % Rebuild indexes and maps
       obj.check();                                                              % Check
     end
-        
+
     function r=sector(obj,varargin)
-      % Retrieves sectors of the Fock space.
+      % Retrieves sectors of the Fock basis.
       %
       %   r=obj.sector(n)
       %
       % arguments:
-      %   obj - The Fock space.
+      %   obj - A Fock subspace basis.
       %   n   - A positive integer or a vector thereof.
       %
       % return:
-      %   The sub-space cataining the sectors mentioned in n. The null
+      %   The subspace cataining the sectors mentioned in n. The null
       %   sector containing the vacuum basis vector is always included in the
       %   result.
       n = cell2mat(fock.vec2cell(varargin,'double'));                           % Convert input to numeric array
@@ -113,8 +110,8 @@ classdef fockspace < matlab.mixin.CustomDisplay
         end                                                                     %   <<
       end                                                                       % <<
       B=B(1,1:j-1);                                                             % Truncate vector of b. vec. ids.
-      r=fockspace();                                                            % Default result is a empty space
-      if ~isempty(B); r=fockspace(B); end                                       % Create sub-space
+      r=fockbasis();                                                            % Default result is a empty space
+      if ~isempty(B); r=fockbasis(B); end                                       % Create sub-space
     end
  
   end
@@ -124,12 +121,12 @@ classdef fockspace < matlab.mixin.CustomDisplay
   methods
     
     function b=isCanonical(obj)
-      % Determines if this Fock space has a canonical basis.
+      % Determines if this Fock basis is canonical.
       %
       %   b=isCanonical(obj)
       %
       % arguments:
-      %   obj - The Fock space.
+      %   obj -  A Fock subspace basis.
       %
       % returns:
       %   b   - TRUE if the basis is canonical, FALSE if it is custom.
@@ -137,12 +134,12 @@ classdef fockspace < matlab.mixin.CustomDisplay
     end
     
     function n=getNumSectors(obj)
-      % Determines the number of Fock space sectors.
+      % Determines the number of Fock space sectors covered by this basis.
       %
       %   n=numSectors(obj)
       %
       % arguments:
-      %   obj - The Fock space.
+      %   obj -  A Fock subspace basis.
       %
       % returns:
       %   n   - The number of sectors.
@@ -163,12 +160,12 @@ classdef fockspace < matlab.mixin.CustomDisplay
     end
 
     function n=getDim(obj)
-      % Determines the Fock space dimension.
+      % Determines the dimension of this Fock subspace basis.
       %
       %   n=getDim(obj)
       %
       % arguments:
-      %   obj - The Fock space.
+      %   obj - A Fock subspace basis.
       %
       % returns:
       %   n   - The dimension.
@@ -181,7 +178,7 @@ classdef fockspace < matlab.mixin.CustomDisplay
       %   n=getBvecId(obj,n)
       %
       % arguments:
-      %   obj - The Fock space.
+      %   obj - A Fock subspace basis.
       %   n   - The index of the basis vector, 1 <= n <= obj.getDim().
       %
       % returns:
@@ -200,7 +197,7 @@ classdef fockspace < matlab.mixin.CustomDisplay
       %   m=obj.realize(f)
       %
       % arguments:
-      %   obj - The Fock space defining the basis.
+      %   obj - The Fock subspace basis to realize on.
       %   f   - The Fock space object to realize.
       %
       % returns:
@@ -235,7 +232,7 @@ classdef fockspace < matlab.mixin.CustomDisplay
       %   f=fockobj.unrealizeFrom(obj,m)
       %
       % arguments:
-      %   obj - The Fock space defining the basis.
+      %   obj - The Fock subspace basis to unrealize from.
       %   m   - A sparse matrix representing f in the basis of obj.
       %
       % returns:
@@ -275,16 +272,16 @@ classdef fockspace < matlab.mixin.CustomDisplay
       %   r - The sum of the operators.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockspace'.
-      assert(isscalar(a)&&isa(a,'fockspace'),...                                % Check if a is a fockspace scalar
-        'a','Must be a scalar of type ''fockspace''');                          % ...
-      assert(isscalar(b)&&isa(b,'fockspace'),...                                % Check if b is a fockspace scalar
-        'b','Must be a scalar of type ''fockspace''');                          % ...
+      %   - If either operator is not a scalar of type 'fockbasis'.
+      assert(isscalar(a)&&isa(a,'fockbasis'),...                                % Check if a is a fockbasis scalar
+        'a','Must be a scalar of type ''fockbasis''');                          % ...
+      assert(isscalar(b)&&isa(b,'fockbasis'),...                                % Check if b is a fockbasis scalar
+        'b','Must be a scalar of type ''fockbasis''');                          % ...
       a.check();                                                                % Check argument #1
       b.check();                                                                % Check argument #2
       assert(a.isCanonical()&&b.isCanonical, ...                                % Not implemented for custom basis
         fock.ERR_NOTIMPL, 'Custom basis vectors');                              % ...
-      r = fockspace([ a.bidm.keys b.bidm.keys ]);                               % Create sum space
+      r = fockbasis([ a.bidm.keys b.bidm.keys ]);                               % Create sum space
     end
     
     function r=horzcat(a,varargin)
@@ -301,18 +298,18 @@ classdef fockspace < matlab.mixin.CustomDisplay
       %   r - The Kronecker tensor product of the operators.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockspace'.
+      %   - If either operator is not a scalar of type 'fockbasis'.
       % 
       % TODO: Basis vector identifier concatenation should go into a
       %       separate function.
-      assert(isscalar(a)&&isa(a,'fockspace'), ...                               & Check if a1 is a fockspace scalar
-        '#1','Must be a scalar of type ''fockspace''');                         % ...
+      assert(isscalar(a)&&isa(a,'fockbasis'), ...                               & Check if a1 is a fockbasis scalar
+        '#1','Must be a scalar of type ''fockbasis''');                         % ...
       a.check();                                                                % Check argument #1
       keysa = a.bidm.keys;                                                      % Get base identifiers a
       for i=1:length(varargin)                                                  % Loop over remaining arguments >>
         b = varargin{i};                                                        %   Get next argument into b
-        assert(isscalar(b)&&isa(b,'fockspace'),sprintf('#%d',i),...             %   Check if it is a fockspace
-          'Must be a scalar of type ''fockspace''');                            %   ...
+        assert(isscalar(b)&&isa(b,'fockbasis'),sprintf('#%d',i),...             %   Check if it is a fockbasis
+          'Must be a scalar of type ''fockbasis''');                            %   ...
         b.check();                                                              %   Check it
         keysb = b.bidm.keys;                                                    %   Get basis vector identifiers b
         na    = length(keysa);                                                  %   Get number of b. vec. ids. in a
@@ -338,7 +335,7 @@ classdef fockspace < matlab.mixin.CustomDisplay
         end                                                                     %   <<
         keysa = keysr;                                                          %   Basis vector ids. a get result
       end                                                                       % <<
-      r = fockspace(keysa);                                                     % Create tensor product space
+      r = fockbasis(keysa);                                                     % Create tensor product space
     end  
     
     function r=kron(a,b)
@@ -354,7 +351,7 @@ classdef fockspace < matlab.mixin.CustomDisplay
       %   r - The Kronecker tensor product of the operators.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockspace'.
+      %   - If either operator is not a scalar of type 'fockbasis'.
       r = horzcat(a,b);                                                         % Invoke horizontal concatenation
     end
     
@@ -387,7 +384,7 @@ classdef fockspace < matlab.mixin.CustomDisplay
       %   obj - The fock space.
       %
       % returns:
-      %   obj - The re-indexed fock space.
+      %   obj - The re-indexed Fock basis.
       if obj.bidm.isKey(fock.C_BVAC); obj.bidm.remove(fock.C_BVAC); end         % Remove vacuum basis vector
       if ~isempty(obj.bidm)                                                     % If other basis vectors exist >>
         obj.bidm = containers.Map(obj.bidm.keys,2:obj.bidm.length+1);           %   Re-index them
@@ -409,13 +406,13 @@ classdef fockspace < matlab.mixin.CustomDisplay
       % Custom display method (overload).
       obj.check();
       if isempty(obj.bidm)
-        fprintf('  empty %s\n',fock.HREF('fockspace'));
+        fprintf('  empty %s\n',fock.HREF('fockbasis'));
       else
-        fprintf('  %s\n\n',fock.HREF('fockspace'));
+        fprintf('  %s\n\n',fock.HREF('fockbasis'));
         fprintf('    Dimensions: <strong>%d</strong>\n',length(obj.bidm));
         n = obj.getNumSectors();
         fprintf('    Sectors   : <strong>%d</strong>\n',n);
-        fprintf('    Basis     : '); 
+        fprintf('    Type      : '); 
         if obj.isCanonical()
           fprintf('<strong>canonical</strong>\n');
         else

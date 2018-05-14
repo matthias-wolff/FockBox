@@ -5,7 +5,7 @@
   %   Matthias Wolff, BTU Cottbus-Senftenberg
   %   Peter beim Graben, BTU Cottbus-Senftenberg
   %
-  % See also fockspace, fockobj
+  % See also fockbasis, fockobj
 
   % == Settings ==
   properties(Constant)
@@ -268,7 +268,7 @@
       cpV = {[pcolor2 0.5], [pcolor2 0.5]};                                     % ...
 
       % Prepare data points                                                     % -------------------------------------
-      H = fockspace(V);                                                         % Get enclosing Fock space
+      H = fockbasis(V);                                                         % Get enclosing Fock subspace
       dim = H.getDim()-1;                                                       % Get space dimension w/o vacuum base
       pts = zeros(length(V),dim);                                               % Pre-allocate data points array
       for i=1:length(V)                                                         % Loop over Fock space objects >>

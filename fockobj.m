@@ -27,10 +27,10 @@ classdef fockobj < matlab.mixin.CustomDisplay
   %   Matthias Wolff, BTU Cottbus-Senftenberg
   %   Peter beim Graben, BTU Cottbus-Senftenberg
   %
-  % See also fockspace, fock
+  % See also fockbasis, fock
   
   % == Toolbox-accessible constants ==
-  properties(Constant,Access={?fock,?fockspace})
+  properties(Constant,Access={?fock,?fockbasis})
     ROW = 1; % Column index of row basis vector identifiers in data property.
     COL = 2; % Column index of column basis vector identifiers in data property.
     VAL = 3; % Column index of values in data property
@@ -45,7 +45,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
   end
 
   % == Toolbox-accessible properties==
-  properties(SetAccess={?fock,?fockspace,?fockpst,?fockfvr})
+  properties(SetAccess={?fock,?fockbasis,?fockpst,?fockfvr})
   
     % Cell array containing the sparse matrix representing this object.
     data
@@ -525,7 +525,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   r - The Kronecker tensor product of the operators.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockspace'.
+      %   - If either operator is not a scalar of type 'fockobj'.
       if isnumeric(a)&&isscalar(a); a = fockobj(a); end                         % Convert numeric -> fockobj sclar
       if isnumeric(b)&&isscalar(b); b = fockobj(b); end                         % Convert numeric -> fockobj sclar
       assert(isa(a,'fockobj'),fock.ERR_BADARG,'a', ...                          % a is bad
@@ -653,7 +653,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
   end
   
   % == Toolbox-accessible constructors ==
-  methods(Access={?fock,?fockspace,?fockpst,?fockfvr})
+  methods(Access={?fock,?fockbasis,?fockpst,?fockfvr})
 
     function check(obj)
       % In-depth consistency check.
@@ -752,7 +752,8 @@ classdef fockobj < matlab.mixin.CustomDisplay
   methods(Static,Access=private)
     
     function [H,a,b]=prepareMatrixOp(a,b)
-      % Creates a Fock space enclosing the argument(s) and realizes them.
+      % Creates a Fock subspace basis enclosing the argument(s) and realizes 
+      % them.
       % 
       %   [H,a]=prepareMatrixOp(a)
       %   [H,a,b]=prepareMatrixOp(a,b)
@@ -764,7 +765,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
       % returns:
       %   a - A sparse matrix realizing input a in Fock space H.
       %   b - A sparse matrix realizing input b in Fock space H.
-      %   H - The Fock space enclosing a and b.
+      %   H - The Fock subspace basis enclosing a and b.
       %
       % See also finishMatrixOp
       V = cell(nargin,1);                                                       % Pre-allocate cell vector of args.
@@ -774,7 +775,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
         b.check();                                                              %   Check second argument
         V{2} = b;                                                               %   Store second argument in V
       end                                                                       % <<
-      H = fockspace(V);                                                         % Get Fock space enclosing all args.
+      H = fockbasis(V);                                                         % Get Fock space enclosing all args.
       a = H.realize(a);                                                         % Realize a in enclosing space
       if nargin>1                                                               % Two arguments >>
         b = H.realize(b);                                                       %   Realize b in enclosing space
@@ -788,7 +789,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %
       % arguments:
       %   r - A sparse matrix representing a Fock space object in H.
-      %   H - The Fock space in which input r is realized.
+      %   H - The Fock subspace basis in which input r is realized.
       %
       % returns:
       %   r - A Fock space object unrealizing input r from Fock space H.

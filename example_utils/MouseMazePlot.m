@@ -192,6 +192,7 @@ classdef MouseMazePlot < handle
       a.EdgeAlpha = p;                                                          % Probability -> edge alpha
       obj.sco.floor(y,x) = a;                                                   % Store scene object
       obj.updateLabels();                                                       % Update row and column labels
+      camva(obj.ax,'auto');                                                     % Update camera viewing angle
     end
 
     function removeFloorTile(obj,x,y)

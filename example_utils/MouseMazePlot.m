@@ -29,7 +29,7 @@ classdef MouseMazePlot < handle
   %% == Read-only properties ==
   
   properties(SetAccess=protected)
-
+    
     % The axes of this plot.
     ax;
 
@@ -96,16 +96,15 @@ classdef MouseMazePlot < handle
       obj.updateLabels();                                                       % Update base labels
       
       % Lighting and camera                                                     % -------------------------------------
-      camproj('perspective');                                                   % Set camera to perspective mode
-      campos([-30 20 -10]);                                                     % Set camera location
-      camup([0 1 0]);                                                           % Set camera's upright axis
-      obj.sco.ambiLight = camlight('right');                                    % Create directed camera ambient light
+      camproj(obj.ax,'perspective');                                            % Set camera to perspective mode
+      campos(obj.ax,[-30 20 -10]);                                              % Set camera location
+      camup(obj.ax,[0 1 0]);                                                    % Set camera's upright axis
+      obj.sco.ambiLight = camlight(obj.ax,'right');                             % Create directed camera ambient light
       obj.sco.ambiLight.Color = MouseMazePlot.clrAmbient;                       % ...
       obj.sco.ambiLight.Style = 'infinite';                                     % ...
-      obj.sco.camLight = camlight('headlight');                                 % Create white camera headlight
+      obj.sco.camLight = camlight(obj.ax,'headlight');                          % Create white camera headlight
       obj.sco.camLight.Style = 'infinite';                                      % ...
-      cameratoolbar;                                                            % Switch on camera toolbar
-      cameratoolbar('SetCoordSys','y');                                         % Set y-axis principal      
+      cameratoolbar(gcf,'SetCoordSys','y');                                     % Add cam. toolbar, y-axis principal
     end
 
     function setCamPos(obj,x,y,z)
@@ -119,7 +118,7 @@ classdef MouseMazePlot < handle
       %    z - new camera elevation.
       campos(obj.ax,[y z x]);
     end
-
+    
     function [xdim,ydim]=getDim(obj,ndim)
       % Returns the dimension of the maze.
       %
@@ -916,7 +915,7 @@ classdef MouseMazePlot < handle
         for x=1:size(obj.sco.xlabels,2); delete(obj.sco.xlabels(1,x)); end      %   Remove all x labels
         obj.sco.xlabels = gobjects(1,xdim);                                     %   Pre-alloc. x label scene object array
         for x=1:xdim                                                            %   Loop over x positions >>
-          t = text(0.43,-0.07,x,sprintf('$|%d_X\\rangle$',x));                  %     Create label
+          t = text(obj.ax,0.43,-0.07,x,sprintf('$|%d_X\\rangle$',x));           %     Create label
           t.Interpreter         = 'latex';                                      %     Interpret label text by LaTeX
           t.VerticalAlignment   = 'top';                                        %     Top-aligned
           t.HorizontalAlignment = 'center';                                     %     Centered
@@ -927,7 +926,7 @@ classdef MouseMazePlot < handle
         for y=1:size(obj.sco.ylabels,2); delete(obj.sco.ylabels(1,y)); end      %   Remove all y labels
         obj.sco.ylabels = gobjects(1,ydim);                                     %   Pre-alloc. x label scene object array
         for y=1:ydim                                                            %   Loop over y positions >>
-          t = text(y,-0.07,0.43,sprintf('$|%d_Y\\rangle$',y));                  %     Create label
+          t = text(obj.ax,y,-0.07,0.43,sprintf('$|%d_Y\\rangle$',y));           %     Create label
           t.Interpreter         = 'latex';                                      %     Interpret label text by LaTeX
           t.VerticalAlignment   = 'middle';                                     %     Middle-aligned
           t.HorizontalAlignment = 'right';                                      %     Right-aligned

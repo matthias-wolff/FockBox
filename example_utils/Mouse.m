@@ -63,31 +63,58 @@ classdef Mouse < handle
       action.O = 0;                                                             % Create trial action
       obj.act(aid) = action;                                                    % Add action
     end
-    
+
     % TODO: Write documentation comments
-    function o=action(obj,a)
+    function o=teleport(obj,x,y)
+      % TODO: ...
+
       fprintf('__________________________________________________________\n');
-      fprintf('ACTION of %s:\n',obj.id);
+      fprintf('TELEPORT agent %s to (%d,%d):\n',obj.id,x,y);
       disp(a);
 
-      o = obj.world.action(obj,a);                                              % Execute action in world
-      obj.phi = o;                                                              % Update mouse state
-      obj.w = obj.w + (1-obj.w'*o)*o;                                           % Update maze state
+      o = perceive(obj.world.teleport(obj,x,y));                                % Teleport and preceive result
 
-      fprintf('\n-> Observation:\n'); disp(obj.phi);
+      fprintf('\n-> Agent state:\n'); disp(obj.phi);
       fprintf('\n-> World state:\n'); disp(obj.w);
       fprintf('__________________________________________________________\n');
     end
+    
+    % TODO: Write documentation comments
+    function o=action(obj,aid)
+      % TODO: ...
 
+      a = obj.act(aid).a;                                                       % Get action semantics
+      fprintf('___________________________________________________________\n'); % Console log
+      fprintf('ACTION "%s" of agent %s:\n',aid,obj.id);                         % Console log
+      disp(a);                                                                  % Console log
+      o = obj.perceive(obj.world.action(obj,a));                                % Execute action and preceive result
+      fprintf('\n> Agent state:\n'); disp(obj.phi);                             % Console log
+      fprintf('\n> World state:\n'); disp(obj.w);                               % Console log
+      fprintf('___________________________________________________________\n'); % Console log
+    end
+
+    % TODO: Write documentation comments
+    function o=perceive(obj,o)
+      % TODO: ...
+
+      obj.phi = o;                                                              % Update mouse state
+      obj.w = obj.w + (1-obj.w'*o)*o;                                           % Update maze state
+    end
+    
     % TODO: Implement and write documentation comments
-    function rexplore(n)
+    function rexplore(obj,n)
       % Perform random exploration.
       
-      % TODO: Implement
+      aids = obj.act.keys;                                                      % Get action ids
+      for i=1:n                                                                 % Random exploration iterations >>
+        aid = aids{randi(length(aids))};                                        %   Randomly select action id
+        obj.action(aid);                                                        %   Perform action
+      end                                                                       % <<
+      
     end
 
     % TODO: Implement and write documentation comments
-    function sexplore(rx,ry)
+    function sexplore(obj,rx,ry)
       % Perform systematic exploration.
       
       % TODO: Implement

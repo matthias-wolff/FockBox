@@ -28,6 +28,7 @@ mouse.addAction('N',fockobj.bket('0X§+Y'));                                     
 mouse.addAction('S',fockobj.bket('0X§-Y'));                                     % Add south action
 world.addAgent(mouse,1,1);                                                      % Add mouse to maze
 
-mouse.rexplore(1000);
+%mouse.rexplore(1000);
+mouse.sexplore(1:3,1:3);
 
 % EOF

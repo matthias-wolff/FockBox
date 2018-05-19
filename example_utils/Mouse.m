@@ -7,16 +7,16 @@ classdef Mouse < handle
     % Unique identifier of agent.
     id;
     
-    % MouseMazePlot visualizing the mouse's inner stage.
+    % MouseMazePlot visualizing the agent's inner stage.
     mmp;
 
-    % The world state
+    % The world state.
     w;
     
-    % The mouse state
+    % The agent state.
     phi;
     
-    % The action repertiore
+    % The action repertoire.
     act;
 
   end
@@ -28,79 +28,111 @@ classdef Mouse < handle
     
   end
   
-  methods
-
-    function obj=Mouse()
-      % Creates a new mouse agent
+  % == Instance getters and information ==
+  methods(Static)
+    
+    function obj=createMouse()
+      % Creates a mouse agent.
       %
-      %   obj = Mouse()
+      %    obj = Agent.createMouse();
       %
       % returns:
-      %   obj   - The mouse object.
-
-      % Initialize mouse serial number                                          % -------------------------------------
-      persistent serialNo;                                                      % Mice serial number
-      if isempty(serialNo); serialNo = 0; end                                   % Initialize mice serial number
-      serialNo = serialNo+1;                                                    % Get serial number of this mouse
-      obj.id = sprintf('mouse%d',serialNo);                                     % Store serial number of this mouse
-
-      % Initialize states and actions                                           % -------------------------------------
-      obj.w   = 0;                                                              % Initial world state
-      obj.phi = 0;                                                              % Initial mouse state
-      obj.act = containers.Map;                                                 % Create actions map
+      %    obj - The newly created agent.
       
-      % Initialize MouseMazePlot of inner stage                                 % -------------------------------------
-      figure('Name',obj.id);                                                    % Create inner stage plot figure
-      obj.mmp = MouseMazePlot([0 0]);                                           % Create inner stage plot
+      obj = Agent('mouse');
+    end
+    
+  end
+  
+  % == Setters and getters ==
+  methods
 
+    function p=isat(obj,x,y)
     end
 
-    % TODO: Write documentation comments
+    function [x y p]=locate(obj)
+    end
+    
+  end
+  
+  % == Perception-action cycle
+  methods
+
     function addAction(obj,aid,a)
-      % TODO: ...
+      % Adds an action to the agent's repertoire.
+      %
+      %   obj.addAction(aid,a)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   aid - The action identifier.
+      %   a   - The action semantics as understood by the world (a ket).
       
       action.a = a;                                                             % Create world action
       action.O = 0;                                                             % Create trial action
       obj.act(aid) = action;                                                    % Add action
     end
 
-    % TODO: Write documentation comments
     function o=teleport(obj,x,y)
-      % TODO: ...
+      % Teleports the agent to a location in the world.
+      %
+      %   o = obj.action(aid,x,y)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   x   - x-coordinate of location to teleport to.
+      %   y   - y-coordinate of location to teleport to.
+      %
+      % returns:
+      %   o   - Observation of world in result of action (a ket).
 
-      fprintf('__________________________________________________________\n');
-      fprintf('TELEPORT agent %s to (%d,%d):\n',obj.id,x,y);
-      disp(a);
-
-      o = perceive(obj.world.teleport(obj,x,y));                                % Teleport and preceive result
-
-      fprintf('\n-> Agent state:\n'); disp(obj.phi);
-      fprintf('\n-> World state:\n'); disp(obj.w);
-      fprintf('__________________________________________________________\n');
+      fprintf('___________________________________________________________\n'); % Console log
+      fprintf('TELEPORT agent "%s" to (%d,%d):\n',obj.id,x,y);                  % Console log
+      o = obj.perceive(obj.world.teleport(obj,x,y));                            % Teleport and preceive result
     end
-    
-    % TODO: Write documentation comments
+
     function o=action(obj,aid)
-      % TODO: ...
+      % Performs an action in the world.
+      %
+      %   o = obj.action(aid)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   aid - Identifier of action.
+      %
+      % returns:
+      %   o   - Observation of world in result of action (a ket).
 
       a = obj.act(aid).a;                                                       % Get action semantics
       fprintf('___________________________________________________________\n'); % Console log
-      fprintf('ACTION "%s" of agent %s:\n',aid,obj.id);                         % Console log
+      fprintf('ACTION "%s" of agent "%s":\n',aid,obj.id);                       % Console log
       disp(a);                                                                  % Console log
-      o = obj.perceive(obj.world.action(obj,a));                                % Execute action and preceive result
-      fprintf('\n> Agent state:\n'); disp(obj.phi);                             % Console log
-      fprintf('\n> World state:\n'); disp(obj.w);                               % Console log
-      fprintf('___________________________________________________________\n'); % Console log
+      o = obj.perceive(obj.world.action(obj,a),aid);                            % Execute action and perceive result
     end
 
-    % TODO: Write documentation comments
-    function o=perceive(obj,o)
-      % TODO: ...
+    function o=perceive(obj,o,aid)
+      % Perceive an observation from the world.
+      %
+      %    o = obj.perceive(o,aid)
+      %    o = obj.perceive(o)
+      %
+      % arguments:
+      %    o   - The observation semantics as output by the world (a ket).
+      %    aid - Identifier of action that caused the perception (optional).
+      %
+      % returns:
+      %    o
 
+      if nargin>=3
+        % TODO: Compare o and obj.phi -> update trial action operator
+      end
+      
       obj.phi = o;                                                              % Update mouse state
       obj.w = obj.w + (1-obj.w'*o)*o;                                           % Update maze state
+      fprintf('\n> Agent state:\n'); disp(obj.phi);                             % Console log
+      fprintf('\n> World state:\n'); disp(obj.w);                               % Console log
     end
-    
+
     % TODO: Implement and write documentation comments
     function rexplore(obj,n)
       % Perform random exploration.
@@ -115,13 +147,27 @@ classdef Mouse < handle
 
     % TODO: Implement and write documentation comments
     function sexplore(obj,rx,ry)
-      % Perform systematic exploration.
+      % Performs a systematic exploration.
       
-      % TODO: Implement
+      aids = obj.act.keys;                                                      % Get action ids
+      for x=rx                                                                  % Loop over x-coordinates >>
+        for y=ry                                                                %   Loop over y-coordinates >>
+          for i=1:length(aids)                                                  %     Loop over actions >>
+            obj.teleport(x,y);                                                  %       Teleport agent to coordinates
+            obj.action(aids{i});                                                %       Perform action
+          end                                                                   %     <<
+        end                                                                     %   <<
+      end                                                                       % <<
+      
     end
-    
+
+  end
+  
+  % == Inner stage ==
+  methods
+
     % TODO: Implement and write documentation comments
-    function O=getVeridicalOp(obj)
+    function O=getVeridProj(obj)
       % Returns the veridicality operator.
       
       % TODO: Implement
@@ -195,6 +241,39 @@ classdef Mouse < handle
 
   end
 
+  % == Protected constructors ==
+  methods(Access=protected)
+
+    function obj=Agent(type)
+      % Creates a new agent
+      %
+      %   obj = Agent(type)
+      %
+      % arguments:
+      %   type - The agent type, 'mouse' or 'cat'.
+      %
+      % returns:
+      %   obj  - The mouse object.
+
+      % Initialize mouse serial number                                          % -------------------------------------
+      persistent serialNo;                                                      % Agent serial number
+      if isempty(serialNo); serialNo = 0; end                                   % Initialize agent serial number
+      serialNo = serialNo+1;                                                    % Get serial number of this agent
+      obj.id = sprintf('%s#%d',type,serialNo);                                  % Create identifier of this agent
+
+      % Initialize states and actions                                           % -------------------------------------
+      obj.w   = 0;                                                              % Initial world state
+      obj.phi = 0;                                                              % Initial mouse state
+      obj.act = containers.Map;                                                 % Create actions map
+      
+      % Initialize MouseMazePlot of inner stage                                 % -------------------------------------
+      figure('Name',obj.id);                                                    % Create inner stage plot figure
+      obj.mmp = MouseMazePlot([0 0]);                                           % Create inner stage plot
+
+    end
+
+  end
+  
 end
 
 % EOF

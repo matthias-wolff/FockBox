@@ -21,7 +21,8 @@ world.addWall(3,2,'N');
 world.addCheese(3,3);
 
 % Create mouse and equip it with some konwledge (instinct)                      % -------------------------------------
-mouse = Mouse();                                                                % Create mouse
+mouse = Agent.createMouse();                                                    % Create mouse
+mouse.mmp.setCamPos(-5,-18,23);
 mouse.addAction('E',fockobj.bket('+X§0Y'));                                     % Add east action
 mouse.addAction('W',fockobj.bket('-X§0Y'));                                     % Add west action
 mouse.addAction('N',fockobj.bket('0X§+Y'));                                     % Add north action

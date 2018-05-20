@@ -1,6 +1,5 @@
-classdef Mouse < handle
-  %MOUSE Summary of this class goes here
-  %   Detailed explanation goes here
+classdef Agent < handle
+  % An agent.
   
   properties(SetAccess=protected)
     
@@ -19,6 +18,9 @@ classdef Mouse < handle
     % The action repertoire.
     act;
 
+    % Operator cache.
+    Oc;
+    
   end
   
   properties(SetAccess={?Maze})
@@ -47,10 +49,15 @@ classdef Mouse < handle
   % == Setters and getters ==
   methods
 
-    function p=isat(obj,x,y)
-    end
-
-    function [x y p]=locate(obj)
+    function b=isMouse(obj)
+      % Determines if an agent is a mouse.
+      %
+      %   b = obj.isMouse()
+      %
+      % returns:
+      %   True if the agent is a mouse, false otherwise.
+      
+      b = startsWith(obj.id,'mouse');
     end
     
   end
@@ -123,19 +130,61 @@ classdef Mouse < handle
       % returns:
       %    o
 
+      % Initialize                                                              % -------------------------------------
+      pw = 0;                                                                   % Wall-perceived flag
+      h = 200;                                                                  % Default agent heading
+
+      % Update trial action operator                                            % -------------------------------------
+      if nargin>=3                                                              % Action caused observation >>
+        % TODO: Update trial action operator
+        [x0,y0] = obj.locate();                                                 %   Locate agent before observation
+        if o==obj.phi; pw = 0.3; end                                            %   Action ineffective -> wall
+        if     aid=='N'; h = 0;                                                 %   Agent heading for north action
+        elseif aid=='E'; h = 90;                                                %   Agent heading for east action
+        elseif aid=='S'; h = 180;                                               %   Agent heading for south action
+        elseif aid=='W'; h = -90;                                               %   Agent heading for west action
+        end                                                                     %
+      end                                                                       % <<
+
+      % Update agent and world states                                           % -------------------------------------
+      obj.phi = o;                                                              % Update agent state
+      obj.w = obj.w + (1-obj.w'*o)*o;                                           % Update world state
+
+      % Update plot                                                             % -------------------------------------
       if nargin>=3
-        % TODO: Compare o and obj.phi -> update trial action operator
+        obj.renderInnerStage(aid);
+      else
+        obj.renderInnerStage();
       end
       
-      obj.phi = o;                                                              % Update mouse state
-      obj.w = obj.w + (1-obj.w'*o)*o;                                           % Update maze state
+      % Perceive cheese and water                                               % -------------------------------------
+      [x,y] = obj.locate();                                                     % Locate agent after observation
+      pc = obj.phi' * obj.getLocationProjector(x,y,1,nan) * obj.phi;            % Probability of cheese at (x,y)
+      pg = obj.phi' * obj.getLocationProjector(x,y,nan,1) * obj.phi;            % Probability of water at (x,y)
+      
+      % Update plot                                                             % -------------------------------------
+      obj.mmp.addFloorTile(x,y);                                                % Add place to plot
+      obj.mmp.addCheese(x,y,pc);                                                % Add/remove cheese
+      obj.mmp.addWater(x,y,pg);                                                 % Add/remove water
+      if obj.isMouse                                                            % Agent is a mouse >>
+        obj.mmp.moveMouse(x,y,h);                                               %   Move mouse in plot
+      else                                                                      % << TODO >>
+        % TODO: other agent types
+      end                                                                       % <<
+      if nargin>=3; obj.mmp.addWall(x0,y0,aid,pw); end                          % Add/remove wall
+      drawnow;                                                                  % Update plots
       fprintf('\n> Agent state:\n'); disp(obj.phi);                             % Console log
       fprintf('\n> World state:\n'); disp(obj.w);                               % Console log
     end
 
-    % TODO: Implement and write documentation comments
     function rexplore(obj,n)
-      % Perform random exploration.
+      % Performs a random exploration.
+      %
+      %   obj.rexplore(n)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   n   - The number of exploration actions.
       
       aids = obj.act.keys;                                                      % Get action ids
       for i=1:n                                                                 % Random exploration iterations >>
@@ -145,13 +194,19 @@ classdef Mouse < handle
       
     end
 
-    % TODO: Implement and write documentation comments
     function sexplore(obj,rx,ry)
       % Performs a systematic exploration.
+      %
+      %   obj.sexplore(rx,ry)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   rx  - Range of x-coordinates to explore, e.g. 1:10.
+      %   ry  - Range of y-coordinates to explore.
       
       aids = obj.act.keys;                                                      % Get action ids
-      for x=rx                                                                  % Loop over x-coordinates >>
-        for y=ry                                                                %   Loop over y-coordinates >>
+      for y=ry                                                                  % Loop over x-coordinates >>
+        for x=rx                                                                %   Loop over y-coordinates >>
           for i=1:length(aids)                                                  %     Loop over actions >>
             obj.teleport(x,y);                                                  %       Teleport agent to coordinates
             obj.action(aids{i});                                                %       Perform action
@@ -166,6 +221,84 @@ classdef Mouse < handle
   % == Inner stage ==
   methods
 
+    function p=isat(obj,x,y)
+      % Determines the probability that the agent is on specified location.
+      %
+      %   p = obj.isat(x,y)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   x   - The x-coordinate of queried location.
+      %   y   - The y-coordinate of queried location.
+      %
+      % returns:
+      %   The probability that the agent is on specified location.
+      
+      P = obj.getLocationProjector(x,y);                                        % Get location projector
+      p = obj.phi' * P *obj.phi;                                                % Measure agent state
+    end
+
+    function [x,y,p]=locate(obj)
+      % Determines the most probable location of the agent.
+      %
+      %   [x,y,p] = obj.locate()
+      %
+      % arguments:
+      %   obj - The agent.
+      %
+      % returns:
+      %   x   - The x-coordinate of the most probable location.
+      %   y   - The y-coordinate of the most probable location.
+      %   p   - The probability.
+      
+      xx = obj.mmp.getDim(1) + 1; yy = obj.mmp.getDim(2) + 1;                   % Get maze size
+      x = 0; y = 0; p = -1;                                                     % Default return values
+      for xi=1:xx                                                               % Loop over x-coordinates >>
+        for yi=1:yy                                                             %   Loop over y-coordinates >>
+          pi = obj.isat(xi,yi);                                                 %     Prob. of agent being @(xi,yi)
+          if pi>p                                                               %     Greatest prob. so far >>
+            x = xi; y = yi; p = pi;                                             %       Update return values
+          end                                                                   %     <<
+        end                                                                     %   <<
+      end                                                                       % <<
+    end
+
+    function P=getLocationProjector(obj,x,y,c,g)
+      % Returns a location projector
+      %
+      %   P = obj.getLocationProjector(x,y,c,g)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   x   - The x-coordinate of the location.
+      %   y   - The y-coordinate of the location.
+      %   c   - Cheese flag: 0 - no cheese, 1 - cheese, otherwise - dont' care
+      %   g   - Water flag: 0 - no water, 1 - water, otherwise - dont' care
+      %
+      % returns:
+      %   P   - The location projector.
+      
+      if nargin<4; c=-1; end; if c~=0&&c~=1; c=-1; end                          % Default cheese flag, normalize
+      if nargin<5; g=-1; end; if g~=0&&g~=1; g=-1; end                          % Default water flag, normalize
+      key = sprintf('PL(%d,%d,%d,%d)',x,y,c,g);                                 % Make operator cache key
+      if obj.Oc.isKey(key)                                                      % Location projector in cache >>
+        P = obj.Oc(key);                                                        %   Retrieve location projector
+      else                                                                      % << Location projector not in cache >>
+        X = fockobj.bket(sprintf('%dX',x));                                     %   x-coordinate ket
+        Y = fockobj.bket(sprintf('%dY',y));                                     %   y-coordinate ket
+        if     c==0; C = fockobj.bket('0C');                                    %   Cheese ket
+        elseif c==1; C = fockobj.bket('1C');                                    %   ...
+        else;        C = fockobj.bket('0C') + fockobj.bket('1C');               %   ...
+        end                                                                     %   ...
+        if     g==0; G = fockobj.bket('0G');                                    %   Water ket
+        elseif g==1; G = fockobj.bket('1G');                                    %   ...
+        else;        G = fockobj.bket('0G') + fockobj.bket('1G');               %   ...
+        end                                                                     %   ...
+        P  = [X Y C G] * [X Y C G]';                                            %   Make location projector
+        obj.Oc(key) = P;                                                        %   Store in cache
+      end                                                                       % <<
+    end
+    
     % TODO: Implement and write documentation comments
     function O=getVeridProj(obj)
       % Returns the veridicality operator.
@@ -239,6 +372,9 @@ classdef Mouse < handle
       F = F';
     end
 
+    function renderInnerStage(obj,lastAid)
+    end
+    
   end
 
   % == Protected constructors ==
@@ -261,13 +397,14 @@ classdef Mouse < handle
       serialNo = serialNo+1;                                                    % Get serial number of this agent
       obj.id = sprintf('%s#%d',type,serialNo);                                  % Create identifier of this agent
 
-      % Initialize states and actions                                           % -------------------------------------
+      % Initialize states, actions and operator cache                           % -------------------------------------
       obj.w   = 0;                                                              % Initial world state
       obj.phi = 0;                                                              % Initial mouse state
       obj.act = containers.Map;                                                 % Create actions map
+      obj.Oc  = containers.Map;                                                 % Create operator cache
       
       % Initialize MouseMazePlot of inner stage                                 % -------------------------------------
-      figure('Name',obj.id);                                                    % Create inner stage plot figure
+      figure('Name',sprintf('Inner stage of %s',obj.id));                       % Create inner stage plot figure
       obj.mmp = MouseMazePlot([0 0]);                                           % Create inner stage plot
 
     end

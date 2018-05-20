@@ -131,7 +131,44 @@ classdef fockobj < matlab.mixin.CustomDisplay
   % == Operators ==
   % https://de.mathworks.com/help/matlab/matlab_oop/implementing-operators-for-your-class.html
   methods
-    
+
+    function r=eq(a,b)
+      % Equality (overloads eq operator).
+      %
+      %    r=eq(a,b)
+      %    r=(a==b)
+      %
+      % arguments:
+      %   a - First operator, a Fock space object.
+      %   b - Second operator, a Fock space object.
+      %
+      % returns:
+      %   r - True, if a and b are equal, false otherwise
+
+      if ~isa(a,'fockobj')||~isa(b,'fockobj')                                   % Not both fockobjs >>
+        r = 0;                                                                  %   Not equal
+      else                                                                      % <<
+        [~,a,b]=fockobj.prepareMatrixOp(a,b);                                   %   Get matrices for fockobjs
+        r = isequal(a,b);                                                       %   Compare matrices
+      end                                                                       % <<
+    end
+
+    function r=ne(a,b)
+      % Inequality (overloads ne operator).
+      %
+      %    r=ne(a,b)
+      %    r=(a~=b)
+      %
+      % arguments:
+      %   a - First operator, a Fock space object.
+      %   b - Second operator, a Fock space object.
+      %
+      % returns:
+      %   r - True, if a and b are not equal, false otherwise
+
+      r = ~eq(a,b);                                                             % Test inequality
+    end
+
     function r=ctranspose(a)
       % Complex conjugate transpose (overloads ' operator).
       %

@@ -88,7 +88,7 @@ classdef Maze < handle
   end
 
   % == API available to agents only ==
-  methods(Access={?Mouse})
+  methods(Access={?Agent})
     
     function o=action(obj,agent,a)
       % Performs an action in the maze.
@@ -172,7 +172,7 @@ classdef Maze < handle
       props.x = xn;                                                             % Set agent's new x position
       props.y = yn;                                                             % Set agent's new y position
       obj.agents(agent.id) = props;                                             % Set agent properties
-      if isa(agent,'Mouse')                                                     % Agent is a mouse >>
+      if agent.isMouse()                                                        % Agent is a mouse >>
         obj.mmp.removeMouse(x,y);                                               %   Move mouse agent in plot
         obj.mmp.addMouse(xn,yn,1,h);                                            %   ...
       else                                                                      % << TODO >>
@@ -198,8 +198,8 @@ classdef Maze < handle
     function checkAgent(obj,agent)
       % Checks an agent object.
       
-      if ~isa(agent,'Mouse')
-        error('Agent is not a Mouse object');
+      if ~isa(agent,'Agent')
+        error('Argument is not an Agent object');
       end
       if ~obj.agents.isKey(agent.id)
         error('Agent is not in maze. Invoke addAgent first!');

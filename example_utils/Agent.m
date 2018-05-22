@@ -1,6 +1,9 @@
 classdef Agent < handle
-  % An agent.
+  % An agent living in a maze world.
+  %
+  % See also: Maze
   
+  %% == Properties ==
   properties(SetAccess=protected)
     
     % Unique identifier of agent.
@@ -9,6 +12,12 @@ classdef Agent < handle
     % MouseMazePlot visualizing the agent's inner stage.
     mmp;
 
+    % Flag indicating that inner stage plot needs to be redrawn.
+    mmpStale;
+    
+    % Flag indicating that redrawing inner stage plot is deferred.
+    mmpDefer;
+    
     % The world state.
     w;
     
@@ -30,7 +39,7 @@ classdef Agent < handle
     
   end
   
-  % == Instance getters and information ==
+  %% == Instance getters ==
   methods(Static)
     
     function obj=createMouse()
@@ -46,7 +55,7 @@ classdef Agent < handle
     
   end
   
-  % == Setters and getters ==
+  %% == Setters and getters ==
   methods
 
     function b=isMouse(obj)
@@ -60,9 +69,28 @@ classdef Agent < handle
       b = startsWith(obj.id,'mouse');
     end
     
+    function deferPlot(obj,defer)
+      % Toggles deferring update of the inner stage plot.
+      %
+      %    obj.deferPlot(defer)
+      %
+      % arguments:
+      %    obj   - The agent.
+      %    defer - True to defer updating the plot, false to enable update.
+      %
+      % remarks:
+      %    Invoking deferPlot(false) does not trigger an update of the plot. 
+      %    The plot will be updated by the next invocation of the 
+      %    innerStageChanged(...) function.
+      %
+      % See also: innerStageChanged
+      
+      obj.mmpDefer = defer~=0;
+    end
+    
   end
   
-  % == Perception-action cycle
+  %% == Perception-action cycle
   methods
 
     function addAction(obj,aid,a)
@@ -75,6 +103,7 @@ classdef Agent < handle
       %   aid - The action identifier.
       %   a   - The action semantics as understood by the world (a ket).
       
+      a.name   = sprintf('a_%s',aid);                                           % Make world action name
       action.a = a;                                                             % Create world action
       action.O = 0;                                                             % Create trial action
       obj.act(aid) = action;                                                    % Add action
@@ -131,48 +160,41 @@ classdef Agent < handle
       %    o
 
       % Initialize                                                              % -------------------------------------
-      pw = 0;                                                                   % Wall-perceived flag
-      h = 200;                                                                  % Default agent heading
-
+      changed = 0;                                                              % Inner stage changed by perception
+      
       % Update trial action operator                                            % -------------------------------------
       if nargin>=3                                                              % Action caused observation >>
-        % TODO: Update trial action operator
-        [x0,y0] = obj.locate();                                                 %   Locate agent before observation
-        if o==obj.phi; pw = 0.3; end                                            %   Action ineffective -> wall
-        if     aid=='N'; h = 0;                                                 %   Agent heading for north action
-        elseif aid=='E'; h = 90;                                                %   Agent heading for east action
-        elseif aid=='S'; h = 180;                                               %   Agent heading for south action
-        elseif aid=='W'; h = -90;                                               %   Agent heading for west action
-        end                                                                     %
+        action = obj.act(aid);                                                  %   Fetch action
+        Oold = action.O;                                                        %   Remember old trial action
+        action.O = action.O + (1-o'*action.O*obj.phi)*(o*obj.phi');             %   Update trial action
+        action.O.name = sprintf('O_%s',aid);                                    %   Set trial action name
+        obj.act(aid) = action;                                                  %   Store action
+        if Oold~=action.O; changed = 1; end                                     %   Inner stage changed
+        disp(action.O);                                                         %   Console log
+      else                                                                      % << Other observation >>
+        aid = '';                                                               %   aid <- no-operation
       end                                                                       % <<
 
       % Update agent and world states                                           % -------------------------------------
+      phiold  = obj.phi;                                                        % Remember old agent state
+      wold    = obj.w;                                                          % Remember old world state
       obj.phi = o;                                                              % Update agent state
-      obj.w = obj.w + (1-obj.w'*o)*o;                                           % Update world state
+      obj.w   = obj.w + (1-obj.w'*o)*o;                                         % Update world state
+      if phiold~=obj.phi || wold~=obj.w; changed = 1; end                       % Inner stage changed
 
-      % Update plot                                                             % -------------------------------------
-      if nargin>=3
-        obj.renderInnerStage(aid);
-      else
-        obj.renderInnerStage();
-      end
-      
-      % Perceive cheese and water                                               % -------------------------------------
-      [x,y] = obj.locate();                                                     % Locate agent after observation
-      pc = obj.phi' * obj.getLocationProjector(x,y,1,nan) * obj.phi;            % Probability of cheese at (x,y)
-      pg = obj.phi' * obj.getLocationProjector(x,y,nan,1) * obj.phi;            % Probability of water at (x,y)
-      
-      % Update plot                                                             % -------------------------------------
-      obj.mmp.addFloorTile(x,y);                                                % Add place to plot
-      obj.mmp.addCheese(x,y,pc);                                                % Add/remove cheese
-      obj.mmp.addWater(x,y,pg);                                                 % Add/remove water
-      if obj.isMouse                                                            % Agent is a mouse >>
-        obj.mmp.moveMouse(x,y,h);                                               %   Move mouse in plot
-      else                                                                      % << TODO >>
-        % TODO: other agent types
+      % Aftermath                                                               % -------------------------------------
+      if changed                                                                % Inner stage changed by perception >>
+        if obj.mmpStale==0                                                      %   This was the only change >>
+          [x,y,p] = obj.locate();                                               %     Locate agent
+          if p==1                                                               %       Agent loc. fully determined >>
+            obj.innerStageChanged(aid,x,y);                                     %       Incremental update of plot
+          else                                                                  %     << Otherwise >>
+            obj.innerStageChanged(aid);                                         %       Full update of plot
+          end                                                                   %     <<
+        else                                                                    %   << There were more changes >>
+          obj.innerStageChanged(aid);                                           %     Full update of plot
+        end                                                                     %   <<
       end                                                                       % <<
-      if nargin>=3; obj.mmp.addWall(x0,y0,aid,pw); end                          % Add/remove wall
-      drawnow;                                                                  % Update plots
       fprintf('\n> Agent state:\n'); disp(obj.phi);                             % Console log
       fprintf('\n> World state:\n'); disp(obj.w);                               % Console log
     end
@@ -194,22 +216,31 @@ classdef Agent < handle
       
     end
 
-    function sexplore(obj,rx,ry)
+    function sexplore(obj,rx,ry,fast)
       % Performs a systematic exploration.
       %
       %   obj.sexplore(rx,ry)
       %
       % arguments:
-      %   obj - The agent.
-      %   rx  - Range of x-coordinates to explore, e.g. 1:10.
-      %   ry  - Range of y-coordinates to explore.
+      %   obj  - The agent.
+      %   rx   - Range of x-coordinates to explore, e.g. 1:10.
+      %   ry   - Range of y-coordinates to explore.
+      %   fast - true for speed-up (skips most of the drawing, optional)
       
+      if nargin<4; fast = 0; end                                                % Default fast option (off)
       aids = obj.act.keys;                                                      % Get action ids
-      for y=ry                                                                  % Loop over x-coordinates >>
-        for x=rx                                                                %   Loop over y-coordinates >>
+      for y=ry                                                                  % Loop over y-coordinates >>
+        for x=rx                                                                %   Loop over x-coordinates >>
+          if fast; obj.deferPlot(1); end                                        %     Fast mode: defer drawing
           for i=1:length(aids)                                                  %     Loop over actions >>
             obj.teleport(x,y);                                                  %       Teleport agent to coordinates
             obj.action(aids{i});                                                %       Perform action
+          end                                                                   %     <<
+          if fast                                                               %     Fast mode >>
+            obj.deferPlot(0);                                                   %       Set defer drawing off
+            obj.innerStageChanged('',x,y);                                      %       Draw inner stage
+            if obj.isMouse(); obj.mmp.moveMouse(x,y,200); end                   %       Draw mouse agent
+            % TODO: Other agents
           end                                                                   %     <<
         end                                                                     %   <<
       end                                                                       % <<
@@ -218,7 +249,7 @@ classdef Agent < handle
 
   end
   
-  % == Inner stage ==
+  %% == Inner stage ==
   methods
 
     function p=isat(obj,x,y)
@@ -234,7 +265,7 @@ classdef Agent < handle
       % returns:
       %   The probability that the agent is on specified location.
       
-      P = obj.getLocationProjector(x,y);                                        % Get location projector
+      P = obj.getLocationProj(x,y);                                             % Get location projector
       p = obj.phi' * P *obj.phi;                                                % Measure agent state
     end
 
@@ -263,121 +294,294 @@ classdef Agent < handle
       end                                                                       % <<
     end
 
-    function P=getLocationProjector(obj,x,y,c,g)
-      % Returns a location projector
+    function P=getLocationProj(obj,x,y,c,g)
+      % Returns a location projector.
       %
-      %   P = obj.getLocationProjector(x,y,c,g)
+      %   P = obj.getLocationProj(x,y,c,g)
       %
       % arguments:
       %   obj - The agent.
       %   x   - The x-coordinate of the location.
       %   y   - The y-coordinate of the location.
-      %   c   - Cheese flag: 0 - no cheese, 1 - cheese, otherwise - dont' care
-      %   g   - Water flag: 0 - no water, 1 - water, otherwise - dont' care
+      %   c   - Cheese flag: 0 - no cheese, 1 - cheese, otherwise - dont' care (optional)
+      %   g   - Water flag: 0 - no water, 1 - water, otherwise - dont' care (optional)
       %
       % returns:
       %   P   - The location projector.
-      
+
+      % Initialize                                                              % -------------------------------------
       if nargin<4; c=-1; end; if c~=0&&c~=1; c=-1; end                          % Default cheese flag, normalize
       if nargin<5; g=-1; end; if g~=0&&g~=1; g=-1; end                          % Default water flag, normalize
+
+      % Cache retrieval                                                         % -------------------------------------
       key = sprintf('PL(%d,%d,%d,%d)',x,y,c,g);                                 % Make operator cache key
-      if obj.Oc.isKey(key)                                                      % Location projector in cache >>
-        P = obj.Oc(key);                                                        %   Retrieve location projector
-      else                                                                      % << Location projector not in cache >>
-        X = fockobj.bket(sprintf('%dX',x));                                     %   x-coordinate ket
-        Y = fockobj.bket(sprintf('%dY',y));                                     %   y-coordinate ket
-        if     c==0; C = fockobj.bket('0C');                                    %   Cheese ket
-        elseif c==1; C = fockobj.bket('1C');                                    %   ...
-        else;        C = fockobj.bket('0C') + fockobj.bket('1C');               %   ...
-        end                                                                     %   ...
-        if     g==0; G = fockobj.bket('0G');                                    %   Water ket
-        elseif g==1; G = fockobj.bket('1G');                                    %   ...
-        else;        G = fockobj.bket('0G') + fockobj.bket('1G');               %   ...
-        end                                                                     %   ...
-        P  = [X Y C G] * [X Y C G]';                                            %   Make location projector
-        obj.Oc(key) = P;                                                        %   Store in cache
+      if obj.Oc.isKey(key)                                                      % Veridicality projector in cache >>
+        P = obj.Oc(key);                                                        %   Retrieve veridicality projector
+        return;                                                                 %   That's it...
       end                                                                       % <<
-    end
-    
-    % TODO: Implement and write documentation comments
-    function O=getVeridProj(obj)
-      % Returns the veridicality operator.
-      
-      % TODO: Implement
+
+      % Build operator                                                          % -------------------------------------
+      X  = fockobj.bket(sprintf('%dX',x));                                      % x-coordinate ket
+      Y  = fockobj.bket(sprintf('%dY',y));                                      % y-coordinate ket
+      C0 = fockobj.bket('0C');                                                  % No-cheese ket
+      C1 = fockobj.bket('1C');                                                  % Cheese ket
+      G0 = fockobj.bket('0G');                                                  % No-water ket
+      G1 = fockobj.bket('1G');                                                  % Water ket
+      P = 0;                                                                    % Initial projector
+      if (c==0||c==-1)&&(g==0||g==-1); P = P + [X Y C0 G0] * [X Y C0 G0]'; end  % No cheese and no water
+      if (c==1||c==-1)&&(g==0||g==-1); P = P + [X Y C1 G0] * [X Y C1 G0]'; end  % Cheese but no no water
+      if (c==0||c==-1)&&(g==1||g==-1); P = P + [X Y C0 G1] * [X Y C0 G1]'; end  % No cheese but water
+      if (c==1||c==-1)&&(g==1||g==-1); P = P + [X Y C1 G1] * [X Y C1 G1]'; end  % Cheese and water
+      P.name = key;                                                             % Name projector
+
+      % Cache location projector                                                % -------------------------------------
+      obj.Oc(key) = P;                                                          % Write to operator cache
     end
 
-    % TODO: Write documentation comments
+    function P=getVeridicalityProj(obj)
+      % Returns the veridicality projector.
+      % 
+      %   P = obj.getVeridicalityProj()
+      %
+      % arguments:
+      %   obj - The agent.
+      %
+      % returns:
+      %   P   - The veridicality projector.
+
+      % Cache retrieval                                                         % -------------------------------------
+      if obj.Oc.isKey('PV')                                                     % Veridicality projector in cache >>
+        P = obj.Oc('PV');                                                       %   Retrieve veridicality projector
+        return;                                                                 %   That's it...
+      end                                                                       % <<
+
+      % Build operator                                                          % -------------------------------------
+      [xx,yy] = obj.mmp.getDim();                                               % Get estimated coordinate ranges
+      wBra = obj.w';                                                            % Get <w|
+      P = 0;                                                                    % Initialize projector
+      for x=1:xx                                                                % Loop over x-coordinates >>
+        X = fockobj.bket(sprintf('%dX',x));                                     %   Make |xX>
+        for y=1:yy                                                              %   Loop over y-coordinates >>
+          Y = fockobj.bket(sprintf('%dY',y));                                   %     Make |yY>
+          for c=0:1                                                             %     Loop over cheese values >>
+            C = fockobj.bket(sprintf('%dC',c));                                 %       Make |cC>
+            for g=0:1                                                           %       Loop over water values
+              G = fockobj.bket(sprintf('%dG',g));                               %         Make |gG>
+              B = [X Y C G];                                                    %         Make "basic situation" ket
+              P = P + (wBra*B)*(B*B');                                          %         Proj. on |w> and add
+            end                                                                 %       <<
+          end                                                                   %     <<
+        end                                                                     %   <<
+      end                                                                       % <<
+      P.name = 'PV';                                                            % Name projector
+
+      % Cache veridicality projector                                            % -------------------------------------
+      obj.Oc('PV') = P;                                                         % Write to operator cache
+
+    end
+
     function F=getFocusOp(obj,fea)
-      % TODO: ...
+      % Returns a focus operator.
+      %
+      %   F = obj.getFocusOp(fea)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   fea - Any combination of
+      %         * 'X': focus on x-coordinate feature,
+      %         * 'Y': focus on y-coordinate feature,
+      %         * 'C': focus on cheese feature, and
+      %         * 'G': focus on water feature,
+      %         but not the empty char array ''.
+      %
+      % returns:
+      %   F   - The focus operator.
+      %
+      % See also: getUnfocusOp
+
+      % Initialize                                                              % -------------------------------------
+      key = '';                                                                 % Normalized version of fea
+      fx = contains(upper(fea),'X'); if fx; key = [key 'X']; end                % Focus on x-coordinate?
+      fy = contains(upper(fea),'Y'); if fy; key = [key 'Y']; end                % Focus on y-coordinate?
+      fc = contains(upper(fea),'C'); if fc; key = [key 'C']; end                % Focus on cheese?
+      fg = contains(upper(fea),'G'); if fg; key = [key 'G']; end                % Focus on water?
+      key = sprintf('F(%s)',key);                                               % Make operator cache key
+
+      % Cache retrieval                                                         % -------------------------------------
+      if obj.Oc.isKey(key)                                                      % Focus operator in cache >>
+        F = obj.Oc(key);                                                        %   Retrieve focus operator
+        return;                                                                 %   That's it...
+      end                                                                       % <<
+
+      % Build operator                                                          % -------------------------------------
+      [xx,yy] = obj.mmp.getDim();                                               % Get estimated coordinate ranges
+      allX = 0; for i=1:xx; allX = allX + fockobj.bket(sprintf('%dX',i)); end   % Ket representing all x-coordinates
+      allY = 0; for i=1:yy; allY = allY + fockobj.bket(sprintf('%dY',i)); end   % Ket representing all y-coordinates
+      allC = 0; for i=0:1;  allC = allC + fockobj.bket(sprintf('%dC',i)); end   % Ket representing cheese and no cheese
+      allG = 0; for i=0:1;  allG = allG + fockobj.bket(sprintf('%dG',i)); end   % Ket representing water and no water
+      F = 0;                                                                    % Initial focus operator
+      for x=1:xx                                                                % Loop over x-coordinates >>
+        if fx                                                                   %   Focus on x >>
+          xket = fockobj.bket(sprintf('%dX',x));                                %     Ket factor <- |xX>
+          xbra = xket';                                                         %     Bra factor <- <xX|
+        else                                                                    %   << Do not focus on x >>
+          xket = 1;                                                             %     Ket factor <- 1
+          xbra = allX';                                                         %     Bra factor <- sum_i <iX|
+        end                                                                     %   <<
+        for y=1:yy                                                              %   Loop over y-coordinates >>
+          if fy                                                                 %     Focus on y >>
+            yket = fockobj.bket(sprintf('%dY',y));                              %       Ket factor <- |yY>
+            ybra = yket';                                                       %       Bra factor <- <yY|
+          else                                                                  %     << Do not focus on y >>
+            yket = 1;                                                           %       Ket factor <- 1
+            ybra = allY';                                                       %       Bra factor <- sum_i <iY|
+          end                                                                   %     <<
+          for c=0:1                                                             %     Loop over cheese values >>
+            if fc                                                               %       Focus on cheese >>
+              cket = fockobj.bket(sprintf('%dC',c));                            %         Ket factor <- |cC>
+              cbra = cket';                                                     %         Bra factor <- <cC|
+            else                                                                %       << Do not focus on cheese >>
+              cket = 1;                                                         %         Ket factor <- 1
+              cbra = allC';                                                     %         Bra factor <- sum_i <iC|
+            end                                                                 %       <<
+            for g=0:1                                                           %       Loop over water values >>
+              if fg                                                             %         Focus on water >>
+                gket = fockobj.bket(sprintf('%dG',g));                          %           Ket factor <- |gG>
+                gbra = gket';                                                   %           Bra factor <- <gG|
+              else                                                              %         << Do not focus on water >>
+                gket = 1;                                                       %           Ket factor <- 1
+                gbra = allG';                                                   %           Bra factor <- sum_i <iG|
+              end                                                               %         <<
+              F = F + [xket yket cket gket]*[xbra ybra cbra gbra];              %         Aggregate focus operator
+              if ~fg; break; end                                                %         No more water summands
+            end                                                                 %       <<
+            if ~fc; break; end                                                  %       No more cheese summands
+          end                                                                   %     <<
+          if ~fy; break; end                                                    %     No more y summands
+        end                                                                     %   <<
+        if ~fx; break; end                                                      %   No more x summands
+      end                                                                       % <<
+      F.name = key;                                                             % Name operator
+
+      % Cache focus operator                                                    % -------------------------------------
+      obj.Oc(key) = F;                                                          % Write to operator cache
+
+    end
+
+    function F=getUnfocusOp(obj,fea)
+      % Returns a generic unfocus operator. Multiply veridicality projector
+      % with return value to obtain the respective veridical unfocus operator.
+      %
+      %   F = obj.getUnfocusOp(fea)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   fea - Any combination of
+      %         * 'X': focus on x-coordinates,
+      %         * 'Y': focus on y-coordinates,
+      %         * 'C': focus on cheese, and
+      %         * 'G': focus on water,
+      %         but not the empty char array ''.
+      %
+      % returns:
+      %   F   - The unfocus operator.
+      %
+      % See also: getFocusOp, getVeridicalityProj
+
+      F = obj.getFocusOp(fea);                                                  % Get respective focus operator
+      name = F.name;                                                            % Get name of focus operator
+      F = F';                                                                   % Return conjugate transpose
+      F.name = strrep(name,'F(','Ug(');                                         % Name unfocus operator
+    end
+
+    function innerStageChanged(obj,aid,x,y)
+      % Invoked when the inner stage has changed. Removes invalidated 
+      % operators from the operator cache and redraws the plot.
+      %
+      %    obj.innerStageChanged(aid,x,y)
+      %    obj.innerStageChanged(aid)
+      %    obj.innerStageChanged()
+      %
+      % arguments:
+      %    obj - The agent.
+      %    aid - Action that caused the change, '' for no action (optional).
+      %    x   - x-coordinate for incremental update of inner stage plot (optional).
+      %    y   - y-coordinate for incremental update of inner stage plot (optional).
+      %
+      % See also: deferPlot
       
       % Initialize                                                              % -------------------------------------
-      fx = ~isemtpy(strfind(upper(fea),'X'));                                   % Focus on x-coordinate?
-      fy = ~isemtpy(strfind(upper(fea),'Y'));                                   % Focus on y-coordinate?
-      fc = ~isemtpy(strfind(upper(fea),'C'));                                   % Focus on cheese?
-      fg = ~isemtpy(strfind(upper(fea),'G'));                                   % Focus on water?
-      [xx,yy] = obj.mmp.getDim(); xx = xx+1; yy = yy+1;                         % Get coordianate ranges
+      if nargin<2; aid=''; end                                                  % Default action id: '' (no-operation)
       
-      allX = 0; for i=1:xx; allX = allX + focjobj.bket(sprintf('%dX',i)); end
-      allY = 0; for i=1:yy; allY = allY + focjobj.bket(sprintf('%dY',i)); end
-      allC = 0; for i=0:1;  allC = allC + focjobj.bket(sprintf('%dC',i)); end
-      allG = 0; for i=0:1;  allG = allG + focjobj.bket(sprintf('%dG',i)); end
+      % Remove invalidated operators from cache                                 % -------------------------------------
+      if obj.Oc.isKey('PV'); obj.Oc.remove('PV'); end                           % Remove veridicality proj. from cache
+      keys = obj.Oc.keys(); obj.Oc.remove(keys(startsWith(keys,'OF(')));        % Remove focus operators from cache
       
-      F = 0;
-      for x=1:xx
-        if fx; 
-          xket = fockobj.bket(sprintf('%dX',x)); 
-          xbra = xket';
-        else
-          xket = allX; 
-          xbra = 1;
-        end
-        for y=1:yy
-          if fy; 
-            yket = fockobj.bket(sprintf('%dY',y)); 
-            ybra = yket';
-          else
-            yket = allY; 
-            ybra = 1;
-          end
-          for c=0:1
-            if fc; 
-              cket = fockobj.bket(sprintf('%dC',c)); 
-              cbra = cket';
-            else
-              cket = allC; 
-              cbra = 1;
-            end
-            for g=0:1
-              if fg; 
-                gket = fockobj.bket(sprintf('%dG',g)); 
-                gbra = gket';
-              else
-                gket = allG; 
-                gbra = 1;
-              end
-              F = F + [xket yket cket gket]*[xbra ybra cbra gbra];
-              if ~fg; break; end
-            end
-            if ~fc; break; end
-          end
-          if ~fy; break; end
-        end
-        if ~fx; break; end
-      end
-    end
+      % Update plot                                                             % -------------------------------------
+      if obj.mmpDefer                                                           % Plotting deferred >>
+        obj.mmpStale = obj.mmpStale + 1;                                        %   Increment stale counter
+        return;                                                                 %   Slip plot update
+      end                                                                       % <<
+      
+      % - Initialize                                                            % - - - - - - - - - - - - - - - - - - -
+      [xx,yy] = obj.mmp.getDim();                                               % Get (known) maze dimension
+      fprintf('\nEstimated maze size: %d x %d\n',xx,yy);                        % Console log
+      if nargin>=4                                                              % Incremental update >>
+        if obj.isMouse(); obj.mmp.removeAllMice(); end                          %   Remove mouse agent from plot
+        % TODO: Other agents
+        rx = x:x; ry=y:y;                                                       %   Coordinate range to update
+      else                                                                      % << Full update >>
+        obj.mmp.clear();                                                        %   Clear plot
+        rx = 1:xx+1; ry=1:yy+1;                                                 %   Coordinate range to update
+      end                                                                       % <<
+      aids = ['N', 'E', 'S', 'W'];                                              % Movement action ids
+      h = 200;                                                                  % Default agent heading
+      if     aid=='N'; h = 0;                                                   % Agent heading for north action
+      elseif aid=='E'; h = 90;                                                  % Agent heading for east action
+      elseif aid=='S'; h = 180;                                                 % Agent heading for south action
+      elseif aid=='W'; h = -90;                                                 % Agent heading for west action
+      end                                                                       %
 
-    % TODO: Write documentation comments
-    function F=getUnfocusOp(obj,fea)
-      F = obj.getFocusOp(fea);
-      F = F';
-    end
-
-    function renderInnerStage(obj,lastAid)
+      % - Update                                                                % - - - - - - - - - - - - - - - - - - -
+      for y=ry                                                                  % Loop over y-coordinates >>
+        for x=rx                                                                %   Loop over x-coordinates >>
+          PL = obj.getLocationProj(x,y);                                        %     Get location projector (x,y)
+          pl = obj.w'*PL*obj.w;                                                 %     Probability of location (x,y)
+          if pl==0; continue; end                                               %     Skip unknown location
+          obj.mmp.addFloorTile(x,y,pl);                                         %     Add place
+          pc = obj.w'*obj.getLocationProj(x,y,1)*obj.w;                         %     Prob. of cheese at location (x,y)
+          obj.mmp.addCheese(x,y,pc);                                            %     Add cheese
+          pg = obj.w'*obj.getLocationProj(x,y,-1,1)*obj.w;                      %     Prob. of water at location (x,y)
+          obj.mmp.addWater(x,y,pg);                                             %     Add water
+          pa = obj.phi'*PL*obj.phi;                                             %     Prob. of agent at location (x,y)
+          if pa>0                                                               %     Agent probability >0 >>
+            if obj.isMouse(); obj.mmp.addMouse(x,y,pa,h); end                   %       Add mouse agent
+            % TODO: Other agents
+          end                                                                   %     <<
+          X = fockobj.bket(sprintf('%dX',x));                                   %     x-coordinate ket
+          Y = fockobj.bket(sprintf('%dY',y));                                   %     y-coordinate ket
+          C = (1-pc)*fockobj.bket('0C') + pc*fockobj.bket('1C');                %     Cheese ket at (x,y)
+          G = (1-pg)*fockobj.bket('0G') + pg*fockobj.bket('1G');                %     Water ket at (x,y)
+          phixy = [X Y C G];                                                    %     Agent ket at (x,y)
+          for i=1:length(aids)                                                  %     Loop over movement actions >>
+            aid = aids(i);                                                      %       Get action identifier
+            if ~obj.act.isKey(aid); continue; end                               %       Skip unknown action ids
+            action = obj.act(aid);                                              %       Get action
+            if phixy.eq(action.O*phixy)                                         %       Trial action ineffective >>
+              obj.mmp.addWall(x,y,aid,0.3);                                     %         Add wall
+            end                                                                 %       <<
+          end                                                                   %     <<
+        end                                                                     %   <<
+      end                                                                       % <<
+      
+      % - Redraw                                                                % - - - - - - - - - - - - - - - - - - -
+      drawnow;                                                                  % Update plots  
+      obj.mmpStale = 0;                                                         % Reset stale counter
     end
     
   end
 
-  % == Protected constructors ==
+  %% == Protected constructors ==
   methods(Access=protected)
 
     function obj=Agent(type)
@@ -406,6 +610,8 @@ classdef Agent < handle
       % Initialize MouseMazePlot of inner stage                                 % -------------------------------------
       figure('Name',sprintf('Inner stage of %s',obj.id));                       % Create inner stage plot figure
       obj.mmp = MouseMazePlot([0 0]);                                           % Create inner stage plot
+      obj.mmpStale = 0;                                                         % Plot up to date
+      obj.mmpDefer = 0;                                                         % Immediately redraw plot
 
     end
 

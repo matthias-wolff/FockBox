@@ -1,6 +1,9 @@
 classdef Maze < handle
-  %TODO: ...
+  % A maze world in which agents (mice or cats) live.
+  %
+  % See also: Agent
   
+  %% == Properties ==
   properties(SetAccess=protected)
     
     % MouseMazePlot visualizing the world.
@@ -15,7 +18,7 @@ classdef Maze < handle
     
   end
 
-  % == Public API ==
+  %% == Public API ==
   methods
  
     function obj=Maze()
@@ -87,7 +90,7 @@ classdef Maze < handle
 
   end
 
-  % == API available to agents only ==
+  %% == API available to agents only ==
   methods(Access={?Agent})
     
     function o=action(obj,agent,a)
@@ -192,7 +195,7 @@ classdef Maze < handle
     
   end
 
-  % == API available to agents only ==
+  %% == Auxiliary methods ==
   methods(Access=protected)
 
     function checkAgent(obj,agent)
@@ -209,3 +212,5 @@ classdef Maze < handle
   
   end
 end
+
+% EOF

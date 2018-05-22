@@ -147,6 +147,22 @@ classdef MouseMazePlot < handle
       end
     end
 
+    function clear(obj)
+      % Clears the plot.
+      %
+      %    obj.clear();
+      %
+      % arguments:
+      %    obj - The mouse-maze plot.
+      
+      obj.removeAllFloorTiles();
+      obj.removeAllWalls();
+      obj.removeAllMice();
+      obj.removeAllCats();
+      obj.removeAllCheese();
+      obj.removeAllWater();
+    end
+    
     % - Floor tiles
 
     function a=addFloorTile(obj,x,y,p,color)
@@ -263,6 +279,21 @@ classdef MouseMazePlot < handle
         end                                                                     %   <<
       end                                                                       % <<
       f = f(1:i-1);                                                             % Shrink result
+    end
+
+    function removeAllFloorTiles(obj)
+      % Removes all floor tiles.
+      % 
+      %   obj.removeAllFloorTiles()
+      %
+      % arguments:
+      %   obj - The mouse-maze plot.
+      
+      for i=1:size(obj.sco.floor,2)
+        for j=1:size(obj.sco.floor,1)
+          obj.addFloorTile(i,j,0);
+        end
+      end
     end
 
     % - Walls
@@ -399,6 +430,23 @@ classdef MouseMazePlot < handle
       w = w(1:i-1);                                                             % Shrink result
     end
 
+    function removeAllWalls(obj)
+      % Removes all walls.
+      % 
+      %   obj.removeAllWalls()
+      %
+      % arguments:
+      %   obj - The mouse-maze plot.
+      
+      [xdim,ydim] = obj.getDim();                                               % Get maze dimensions
+      for x=1:xdim+1                                                            % Loop over x coordinates >>
+        for y=1:ydim+1                                                          %     Loop over y coordinates >>
+          obj.removeWall(x,y,'W');                                              %     Remove west wall
+          obj.removeWall(x,y,'S');                                              %     Remove east wall
+        end                                                                     %   <<
+      end                                                                       % <<
+    end
+    
     % - Mice
 
     function a=addMouse(obj,x,y,p,h)
@@ -469,11 +517,8 @@ classdef MouseMazePlot < handle
       %
       % throws exception:
       % - If either x or y is non-positive.
-      for i=1:size(obj.sco.mice,2)
-        for j=1:size(obj.sco.mice,1)
-          obj.addMouse(i,j,0);
-        end
-      end
+      
+      obj.removeAllMice();
       if nargin<4; h = 0; end                                                   % Default heading angle: 0°
       a = obj.addMouse(x,y,1,h);
     end
@@ -546,6 +591,21 @@ classdef MouseMazePlot < handle
       m = m(1:i-1);                                                             % Shrink result
     end
 
+    function removeAllMice(obj)
+      % Removes all mice.
+      % 
+      %   obj.removeAllMice()
+      %
+      % arguments:
+      %   obj - The mouse-maze plot.
+      
+      for i=1:size(obj.sco.mice,2)
+        for j=1:size(obj.sco.mice,1)
+          obj.addMouse(i,j,0);
+        end
+      end
+    end
+    
     % - Cats
 
     function a=addCat(obj,x,y,p,h)
@@ -684,6 +744,21 @@ classdef MouseMazePlot < handle
       c = c(1:i-1);                                                             % Shrink result
     end
     
+    function removeAllCats(obj)
+      % Removes all cats.
+      % 
+      %   obj.removeAllCats()
+      %
+      % arguments:
+      %   obj - The mouse-maze plot.
+      
+      for i=1:size(obj.sco.cats,2)
+        for j=1:size(obj.sco.cats,1)
+          obj.addCat(i,j,0);
+        end
+      end
+    end
+
     % - Cheese
     
     function a=addCheese(obj,x,y,p)
@@ -790,6 +865,21 @@ classdef MouseMazePlot < handle
         end                                                                     %   <<
       end                                                                       % <<
       c = c(1:i-1);                                                             % Shrink result
+    end
+
+    function removeAllCheese(obj)
+      % Removes all cheese.
+      % 
+      %   obj.removeAllCheese()
+      %
+      % arguments:
+      %   obj - The mouse-maze plot.
+      
+      for i=1:size(obj.sco.cheese,2)
+        for j=1:size(obj.sco.cheese,1)
+          obj.addCheese(i,j,0);
+        end
+      end
     end
 
     % - Water
@@ -901,7 +991,22 @@ classdef MouseMazePlot < handle
       end                                                                       % <<
       w = w(1:i-1);                                                             % Shrink result
     end
-        
+
+    function removeAllWater(obj)
+      % Removes all water.
+      % 
+      %   obj.removeAllWater()
+      %
+      % arguments:
+      %   obj - The mouse-maze plot.
+      
+      for i=1:size(obj.sco.water,2)
+        for j=1:size(obj.sco.water,1)
+          obj.addWater(i,j,0);
+        end
+      end
+    end    
+
   end
 
   %% == Graphics objects workers ==

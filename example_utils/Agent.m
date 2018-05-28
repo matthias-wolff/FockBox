@@ -55,41 +55,6 @@ classdef Agent < handle
     
   end
   
-  %% == Setters and getters ==
-  methods
-
-    function b=isMouse(obj)
-      % Determines if an agent is a mouse.
-      %
-      %   b = obj.isMouse()
-      %
-      % returns:
-      %   True if the agent is a mouse, false otherwise.
-      
-      b = startsWith(obj.id,'mouse');
-    end
-    
-    function deferPlot(obj,defer)
-      % Toggles deferring update of the inner stage plot.
-      %
-      %    obj.deferPlot(defer)
-      %
-      % arguments:
-      %    obj   - The agent.
-      %    defer - True to defer updating the plot, false to enable update.
-      %
-      % remarks:
-      %    Invoking deferPlot(false) does not trigger an update of the plot. 
-      %    The plot will be updated by the next invocation of the 
-      %    innerStageChanged(...) function.
-      %
-      % See also: innerStageChanged
-      
-      obj.mmpDefer = defer~=0;
-    end
-    
-  end
-  
   %% == Perception-action cycle
   methods
 
@@ -102,6 +67,8 @@ classdef Agent < handle
       %   obj - The agent.
       %   aid - The action identifier.
       %   a   - The action semantics as understood by the world (a ket).
+      %
+      % See also: action, dispAction
       
       a.name   = sprintf('a_%s',aid);                                           % Make world action name
       action.a = a;                                                             % Create world action
@@ -122,8 +89,6 @@ classdef Agent < handle
       % returns:
       %   o   - Observation of world in result of action (a ket).
 
-      fprintf('___________________________________________________________\n'); % Console log
-      fprintf('TELEPORT agent "%s" to (%d,%d):\n',obj.id,x,y);                  % Console log
       o = obj.perceive(obj.world.teleport(obj,x,y));                            % Teleport and preceive result
     end
 
@@ -140,9 +105,6 @@ classdef Agent < handle
       %   o   - Observation of world in result of action (a ket).
 
       a = obj.act(aid).a;                                                       % Get action semantics
-      fprintf('___________________________________________________________\n'); % Console log
-      fprintf('ACTION "%s" of agent "%s":\n',aid,obj.id);                       % Console log
-      disp(a);                                                                  % Console log
       o = obj.perceive(obj.world.action(obj,a),aid);                            % Execute action and perceive result
     end
 
@@ -170,7 +132,6 @@ classdef Agent < handle
         action.O.name = sprintf('O_%s',aid);                                    %   Set trial action name
         obj.act(aid) = action;                                                  %   Store action
         if Oold~=action.O; changed = 1; end                                     %   Inner stage changed
-        disp(action.O);                                                         %   Console log
       else                                                                      % << Other observation >>
         aid = '';                                                               %   aid <- no-operation
       end                                                                       % <<
@@ -195,8 +156,6 @@ classdef Agent < handle
           obj.innerStageChanged(aid);                                           %     Full update of plot
         end                                                                     %   <<
       end                                                                       % <<
-      fprintf('\n> Agent state:\n'); disp(obj.phi);                             % Console log
-      fprintf('\n> World state:\n'); disp(obj.w);                               % Console log
     end
 
     function rexplore(obj,n)
@@ -525,7 +484,6 @@ classdef Agent < handle
       
       % - Initialize                                                            % - - - - - - - - - - - - - - - - - - -
       [xx,yy] = obj.mmp.getDim();                                               % Get (known) maze dimension
-      fprintf('\nEstimated maze size: %d x %d\n',xx,yy);                        % Console log
       if nargin>=4                                                              % Incremental update >>
         if obj.isMouse(); obj.mmp.removeAllMice(); end                          %   Remove mouse agent from plot
         % TODO: Other agents
@@ -580,6 +538,60 @@ classdef Agent < handle
     end
     
   end
+  
+  %% == Auxiliary functions ==
+  methods
+
+    function b=isMouse(obj)
+      % Determines if an agent is a mouse.
+      %
+      %   b = obj.isMouse()
+      %
+      % returns:
+      %   True if the agent is a mouse, false otherwise.
+      
+      b = startsWith(obj.id,'mouse');
+    end
+
+    function dispAction(obj,aid)
+      % Displays an action of the agent.
+      %
+      %   obj.dispAction(aid)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   aid - The action identifier.
+      %
+      % See also: addAction, action
+      
+      action = obj.act(aid);
+      fprintf('Action %s of %\n',aid,obj.id);
+      fprintf('World action:\n');
+      disp(action.a);
+      fprintf('Trial action:\n');
+      disp(action.O);
+    end
+    
+    function deferPlot(obj,defer)
+      % Toggles deferring update of the inner stage plot.
+      %
+      %    obj.deferPlot(defer)
+      %
+      % arguments:
+      %    obj   - The agent.
+      %    defer - True to defer updating the plot, false to enable update.
+      %
+      % remarks:
+      %    Invoking deferPlot(false) does not trigger an update of the plot. 
+      %    The plot will be updated by the next invocation of the 
+      %    innerStageChanged(...) function.
+      %
+      % See also: innerStageChanged
+      
+      obj.mmpDefer = defer~=0;
+    end
+
+  end
 
   %% == Protected constructors ==
   methods(Access=protected)
@@ -608,7 +620,7 @@ classdef Agent < handle
       obj.Oc  = containers.Map;                                                 % Create operator cache
       
       % Initialize MouseMazePlot of inner stage                                 % -------------------------------------
-      figure('Name',sprintf('Inner stage of %s',obj.id));                       % Create inner stage plot figure
+      figure('Name',sprintf('Inner stage of %s',obj.id),'NumberTitle','off');   % Create inner stage plot figure
       obj.mmp = MouseMazePlot([0 0]);                                           % Create inner stage plot
       obj.mmpStale = 0;                                                         % Plot up to date
       obj.mmpDefer = 0;                                                         % Immediately redraw plot

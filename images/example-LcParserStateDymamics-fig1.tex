@@ -1,0 +1,131 @@
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage[linguistics]{forest}
+
+\newcommand{\TT}[1]{\protect\scalebox{1}[1.0]{\texttt{#1}}}
+
+\begin{document}
+\thispagestyle{empty}
+
+    \noindent
+    $\emptyset$
+    \hspace*{0pt}
+    \raisebox{6pt}{$\underrightarrow{\text{\raisebox{2pt}{Frankie}}}$}
+    \hspace*{-15pt}    
+    \begin{forest} for tree={inner sep=0pt,l=10pt,l sep=10pt, s sep=3pt}
+      [
+        \TT{S}
+        [
+          \TT{N}
+          [
+            Frankie
+          ]
+        ]
+        [
+          \TT{[VP]}
+        ]
+      ]
+    \end{forest}
+    \hspace*{0pt}
+    \raisebox{8pt}{$\underrightarrow{\text{goes}}$}
+    \hspace*{-9pt}
+    \begin{forest} for tree={inner sep=0pt,l=10pt,l sep=10pt, s sep=3pt}
+      [
+        \TT{S}
+        [
+          \TT{N}
+          [
+            Frankie
+          ]
+        ]
+        [
+          \TT{VP}
+          [
+            \TT{V}
+            [
+              goes
+            ]
+          ]
+          [
+            \TT{[PP]}
+          ]
+        ]
+      ]
+    \end{forest}
+    \hspace*{0pt}
+    \raisebox{6pt}{$\underrightarrow{\text{\raisebox{2pt}{to}}}$}
+    \hspace*{0pt}
+    \begin{forest} for tree={inner sep=0pt,l=10pt,l sep=10pt, s sep=3pt}
+      [
+        \TT{S}
+        [
+          \TT{N}
+          [
+            Frankie
+          ]
+        ]
+        [
+          \TT{VP}
+          [
+            \TT{V}
+            [
+              goes
+            ]
+          ]
+          [
+            \TT{PP}
+            [
+              \TT{P}
+              [
+                to
+              ]
+            ]
+            [
+              \TT{[N]}
+            ]
+          ]
+        ]
+      ]
+    \end{forest}
+    \hspace*{-21pt}
+    \raisebox{6pt}{$\underrightarrow{\text{Hollywood}}$}
+    \hspace*{-15pt}
+    \begin{forest} for tree={inner sep=0pt,l=10pt,l sep=10pt, s sep=3pt}
+      [
+        \TT{S}
+        [
+          \TT{N}
+          [
+            Frankie
+          ]
+        ]
+        [
+          \TT{VP}
+          [
+            \TT{V}
+            [
+              goes
+            ]
+          ]
+          [
+            \TT{PP}
+            [
+              \TT{P}
+              [
+                to
+              ]
+            ]
+            [
+              \TT{N}
+              [
+                Hollywood
+              ]
+            ]
+          ]
+        ]
+      ]
+    \end{forest}
+
+\end{document}

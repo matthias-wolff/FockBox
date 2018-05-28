@@ -25,7 +25,7 @@ classdef Maze < handle
       % Creates a maze world.
       
       obj.agents = containers.Map;
-      figure('Name','World');
+      figure('Name','World','NumberTitle','off');
       obj.mmp = MouseMazePlot([0 0]);
     end
 

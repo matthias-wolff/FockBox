@@ -19,6 +19,7 @@ world.addWall(2,2,'W');
 world.addWall(2,2,'N');
 world.addWall(3,2,'N');
 world.addCheese(3,3);
+set(gcf,'Visible','on','WindowStyle','normal');
 set(gcf,'OuterPosition',[0,100,500,500]);                                       % Position figure window
 
 % Create mouse and equip it with some konwledge (instinct)                      % -------------------------------------
@@ -29,6 +30,7 @@ mouse.addAction('W',fockobj.bket('-X§0Y'));                                     
 mouse.addAction('N',fockobj.bket('0X§+Y'));                                     % Add north action
 mouse.addAction('S',fockobj.bket('0X§-Y'));                                     % Add south action
 world.addAgent(mouse,1,1);                                                      % Add mouse to maze
+set(gcf,'Visible','on','WindowStyle','normal');
 set(gcf,'OuterPosition',[500,100,500,500]);                                     % Position figure window
 
 %mouse.rexplore(1000);                                                           % Random exploration

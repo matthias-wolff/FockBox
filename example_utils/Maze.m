@@ -100,7 +100,7 @@ classdef Maze < handle
       %    o = obj.action(agent,a)
       %
       % arguments:
-      %    obj   - The mae world.
+      %    obj   - The maze world.
       %    agent - The agent to perform the action with.
       %    a     - The action, a tensor product of a ket vector for the
       %            movement in x-direction (|+X>, |0X|, or |-X>) and a

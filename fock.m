@@ -21,8 +21,8 @@
     % Tensor product delimiter of base identifiers ('&#8855;').
     C_TDEL = char(8855);
     
-    % Alternative tensor product delimiter of base identifiers (ASCII,'§').
-    C_TDELA = '§';
+    % Alternative tensor product delimiter of base identifiers ('&#167;').
+    C_TDELA = char(167);
     
     % Identifier of vacuum base ('&#949;').
     C_BVAC = char(949);

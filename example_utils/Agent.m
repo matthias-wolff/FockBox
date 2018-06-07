@@ -18,6 +18,9 @@ classdef Agent < handle
     % Flag indicating that redrawing inner stage plot is deferred.
     mmpDefer;
     
+    % SemanticStructurePlot visualizing the agent's semantic structure.
+    ssp;
+    
     % The world state.
     w;
     
@@ -206,6 +209,90 @@ classdef Agent < handle
       
     end
 
+    function screate(obj,name)
+      % Creates a semantic structure for the world.
+      %
+      %   obj.screate(name)
+      %
+      % arguments:
+      %   obj  - The agent.
+      %   name - The basename of files created (.dot and .png).
+
+      PC   = obj.getValueProj('1C');
+      PH   = obj.getValueProj('0C');
+      PG   = obj.getValueProj('1G');
+      PT   = obj.getValueProj('0G');
+
+      Fc   = obj.getFocusOp('C');
+      Fg   = obj.getFocusOp('G');
+
+      Fx   = obj.getFocusOp('X');
+      UGx  = obj.getUnfocusOp('X');
+      Fy   = obj.getFocusOp('Y');
+      UGy  = obj.getUnfocusOp('Y');
+      Fxy  = obj.getFocusOp('XY');
+      UGxy = obj.getUnfocusOp('XY');
+
+      fxc = ~(obj.w'*PC*UGx*Fx*PH*obj.w);
+      fyc = ~(obj.w'*PC*UGy*Fy*PH*obj.w);
+      if (~(fxc | fyc))
+        fxyc = ~(obj.w'*PC*UGxy*Fxy*PH*obj.w);
+      else
+        fxyc = 0;
+      end
+      fxg = ~(obj.w'*PG*UGx*Fx*PT*obj.w);
+      fyg = ~(obj.w'*PG*UGy*Fy*PT*obj.w);
+      if (~(fxg | fyg))
+        fxyg = ~(obj.w'*PG*UGxy*Fxy*PT*obj.w);
+      else
+        fxyg = 0;
+      end
+
+      [xx,yy] = obj.mmp.getDim();                                               % Get estimated coordinate ranges
+      xs = 0;
+      for i=1:xx
+        xs = xs + fockobj.bket(sprintf('%dX',i));
+      end
+      obj.ssp.addValueSet('X', xs, Fx*obj.w);
+      ys = 0;
+      for i=1:yy
+        ys = ys + fockobj.bket(sprintf('%dY',i));
+      end
+      obj.ssp.addValueSet('Y', ys, Fy*obj.w);
+      cs = 0;
+      for i=1:2
+        cs = cs + fockobj.bket(sprintf('%dC',i-1));
+      end
+      obj.ssp.addValueSet('C', cs, Fc*obj.w);
+      gs = 0;
+      for i=1:2
+        gs = gs + fockobj.bket(sprintf('%dG',i-1));
+      end
+      obj.ssp.addValueSet('G', gs, Fg*obj.w);
+
+      if (fxc)
+        obj.ssp.addDependency('C', 'X');
+      end
+      if (fyc)
+        obj.ssp.addDependency('C', 'Y');
+      end
+      if (fxyc)
+        obj.ssp.addDependency('C', {'X';'Y'});
+      end
+      if (fxg)
+        obj.ssp.addDependency('G', 'X');
+      end
+      if (fyg)
+        obj.ssp.addDependency('G', 'Y');
+      end
+      if (fxyg)
+        obj.ssp.addDependency('G', {'X';'Y'});
+      end
+
+      obj.ssp.createGraph(name);
+
+    end
+  
   end
   
   %% == Inner stage ==
@@ -453,6 +540,54 @@ classdef Agent < handle
       F.name = strrep(name,'F(','Ug(');                                         % Name unfocus operator
     end
 
+    function P=getValueProj(obj,v)
+      % Returns a value projector.
+      %
+      %   P = obj.getValueProj(v)
+      %
+      % arguments:
+      %   obj - The agent.
+      %   v   - The value as string, e.g. '1C'.
+      %
+      % returns:
+      %   P   - The value projector.
+      % Initialize                                                              % -------------------------------------
+      key = sprintf('P(%s)',v);                                                 % Make operator cache key
+
+      % Cache retrieval                                                         % -------------------------------------
+      if obj.Oc.isKey(key)                                                      % Value projector in cache >>
+        P = obj.Oc(key);                                                        %   Retrieve value projector
+        return;                                                                 %   That's it...
+      end                                                                       % <<
+
+      % Build projector                                                         % -------------------------------------
+      vbra = fockobj.bket(v)';
+      [xx,yy] = obj.mmp.getDim();                                               % Get estimated coordinate ranges
+      v = char(v);
+      F = obj.getFocusOp(v(end:end));
+      
+      P = 0;
+      for x=1:xx
+        X = fockobj.bket(sprintf('%dX',x));
+        for y=1:yy
+          Y = fockobj.bket(sprintf('%dY',y));
+          for c=0:1
+            C = fockobj.bket(sprintf('%dC',c));
+            for g=0:1
+              G = fockobj.bket(sprintf('%dG',g));
+              B = [X Y C G];
+              P = P + (vbra*F*B)*(B*B');
+            end
+          end
+        end
+      end
+      P.name = key;
+
+      % Cache value projector                                                   % -------------------------------------
+      obj.Oc(key) = P;                                                          % Write to operator cache
+
+    end
+
     function innerStageChanged(obj,aid,x,y)
       % Invoked when the inner stage has changed. Removes invalidated 
       % operators from the operator cache and redraws the plot.
@@ -624,6 +759,11 @@ classdef Agent < handle
       obj.mmp = MouseMazePlot([0 0]);                                           % Create inner stage plot
       obj.mmpStale = 0;                                                         % Plot up to date
       obj.mmpDefer = 0;                                                         % Immediately redraw plot
+
+      % Initialize SemanticStructurePlot                                        % -------------------------------------
+      figure('Name',sprintf('Semantic Structure of %s',obj.id),...
+             'NumberTitle','off');                                              % Create semantic structure plot figure
+      obj.ssp = SemanticStructurePlot();                                        % Create semantic structure plot
 
     end
 

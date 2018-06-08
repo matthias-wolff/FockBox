@@ -132,7 +132,7 @@ classdef SemanticStructurePlot < handle
       name = char(name);
 
       dot = fopen([name '.dot'], "w");
-      fprintf(dot, 'graph {\n');
+      fprintf(dot, 'graph G {\n');
 
       wc = '';
       dsids = obj.ds.keys;

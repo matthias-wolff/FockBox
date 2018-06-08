@@ -232,13 +232,19 @@ classdef SemanticStructurePlot < handle
       fprintf(dot, '}\n');
       fclose(dot);
 
-      system(['dot -Tpng ' name '.dot > ' name '.png -q1']);
-      img = imread([name '.png']);
+      if (exist('dot', 'file')==2)
+        e = system(['dot -Tpng ' name '.dot > ' name '.png -q1']);
+        if e
+          warning('dot ran with error %d (no png-file was created)',e);
+        else
+          hold(obj.ax, 'on');
+          imshow(imread([name '.png']), 'Parent', obj.ax);
+          hold(obj.ax, 'off');
+        end
+      else
+        warning('graphviz ''dot'' was not found (png-file can not be created)');
+      end
 
-      hold(obj.ax, 'on');
-      imshow(img, 'Parent', obj.ax);
-      hold(obj.ax, 'off');
-      
       function tex=texify(str)
         tex = regexprep(str,'\\\','\\\\setminus');
         tex = regexprep(tex,'\.\.\.','\\\\dots');

@@ -216,77 +216,90 @@ classdef Agent < handle
       %
       % arguments:
       %   obj  - The agent.
-      %   name - The basename of files created (.dot and .png).
+      %   name - The basename of the created dot-file.
 
-      PC   = obj.getValueProj('1C');
-      PH   = obj.getValueProj('0C');
-      PG   = obj.getValueProj('1G');
-      PT   = obj.getValueProj('0G');
-
-      Fc   = obj.getFocusOp('C');
-      Fg   = obj.getFocusOp('G');
-
-      Fx   = obj.getFocusOp('X');
-      UGx  = obj.getUnfocusOp('X');
-      Fy   = obj.getFocusOp('Y');
-      UGy  = obj.getUnfocusOp('Y');
-      Fxy  = obj.getFocusOp('XY');
-      UGxy = obj.getUnfocusOp('XY');
-
-      fxc = ~(obj.w'*PC*UGx*Fx*PH*obj.w);
-      fyc = ~(obj.w'*PC*UGy*Fy*PH*obj.w);
-      if (~(fxc | fyc))
-        fxyc = ~(obj.w'*PC*UGxy*Fxy*PH*obj.w);
-      else
-        fxyc = 0;
-      end
-      fxg = ~(obj.w'*PG*UGx*Fx*PT*obj.w);
-      fyg = ~(obj.w'*PG*UGy*Fy*PT*obj.w);
-      if (~(fxg | fyg))
-        fxyg = ~(obj.w'*PG*UGxy*Fxy*PT*obj.w);
-      else
-        fxyg = 0;
-      end
-
-      [xx,yy] = obj.mmp.getDim();                                               % Get estimated coordinate ranges
-      xs = 0;
-      for i=1:xx
-        xs = xs + fockobj.bket(sprintf('%dX',i));
-      end
-      obj.ssp.addValueSet('X', xs, Fx*obj.w);
-      ys = 0;
-      for i=1:yy
-        ys = ys + fockobj.bket(sprintf('%dY',i));
-      end
-      obj.ssp.addValueSet('Y', ys, Fy*obj.w);
+      PC = obj.getValueProj('1C');
+      PH = obj.getValueProj('0C');
+      Fc = obj.getFocusOp('C');
       cs = 0;
       for i=1:2
         cs = cs + fockobj.bket(sprintf('%dC',i-1));
       end
       obj.ssp.addValueSet('C', cs, Fc*obj.w);
+      obj.ssp.preview();
+
+      PG = obj.getValueProj('1G');
+      PT = obj.getValueProj('0G');
+      Fg = obj.getFocusOp('G');
       gs = 0;
       for i=1:2
         gs = gs + fockobj.bket(sprintf('%dG',i-1));
       end
       obj.ssp.addValueSet('G', gs, Fg*obj.w);
+      obj.ssp.preview();
 
+      [xx,yy] = obj.mmp.getDim();                                               % Get estimated coordinate ranges
+      Fx  = obj.getFocusOp('X');
+      UGx = obj.getUnfocusOp('X');
+      xs = 0;
+      for i=1:xx
+        xs = xs + fockobj.bket(sprintf('%dX',i));
+      end
+      obj.ssp.addValueSet('X', xs, Fx*obj.w);
+      obj.ssp.preview();
+
+      Fy  = obj.getFocusOp('Y');
+      UGy = obj.getUnfocusOp('Y');
+      ys = 0;
+      for i=1:yy
+        ys = ys + fockobj.bket(sprintf('%dY',i));
+      end
+      obj.ssp.addValueSet('Y', ys, Fy*obj.w);
+      obj.ssp.preview();
+
+      fxc = ~(obj.w'*PC*UGx*Fx*PH*obj.w);
       if (fxc)
         obj.ssp.addDependency('C', 'X');
+        obj.ssp.preview();
       end
+      fyc = ~(obj.w'*PC*UGy*Fy*PH*obj.w);
       if (fyc)
         obj.ssp.addDependency('C', 'Y');
+        obj.ssp.preview();
       end
-      if (fxyc)
-        obj.ssp.addDependency('C', {'X';'Y'});
-      end
+
+      fxg = ~(obj.w'*PG*UGx*Fx*PT*obj.w);
       if (fxg)
         obj.ssp.addDependency('G', 'X');
+        obj.ssp.preview();
       end
+      fyg = ~(obj.w'*PG*UGy*Fy*PT*obj.w);
       if (fyg)
         obj.ssp.addDependency('G', 'Y');
+        obj.ssp.preview();
+      end
+
+      if (~(fxc | fyc))
+        Fxy  = obj.getFocusOp('XY');
+        UGxy = obj.getUnfocusOp('XY');
+        fxyc = ~(obj.w'*PC*UGxy*Fxy*PH*obj.w);
+      else
+        fxyc = 0;
+      end
+      if (fxyc)
+        obj.ssp.addDependency('C', {'X' 'Y'});
+        obj.ssp.preview();
+      end
+      if (~(fxg | fyg))
+        Fxy  = obj.getFocusOp('XY');
+        UGxy = obj.getUnfocusOp('XY');
+        fxyg = ~(obj.w'*PG*UGxy*Fxy*PT*obj.w);
+      else
+        fxyg = 0;
       end
       if (fxyg)
-        obj.ssp.addDependency('G', {'X';'Y'});
+        obj.ssp.addDependency('G', {'X' 'Y'});
+        obj.ssp.preview();
       end
 
       obj.ssp.createGraph(name);

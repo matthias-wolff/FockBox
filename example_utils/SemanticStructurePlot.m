@@ -6,7 +6,6 @@ classdef SemanticStructurePlot < handle
   %
   % TODO:
   % - add value sets to plot
-  % - add nodes to plot
   % - use adjacency matrix for creation of dot-file
 
   %% == Read-only properties ==
@@ -39,6 +38,7 @@ classdef SemanticStructurePlot < handle
 
     % The adjacency matrix of the graph.
     aj;
+  
   end
 
   %% == Public API ==
@@ -60,12 +60,7 @@ classdef SemanticStructurePlot < handle
       axis equal tight off;                                                     % Parametrize plot axes
       set(gcf,'color','w');                                                     % Set figure plot background to white
 
-      obj.vs = containers.Map;                                                  % Create value sets map
-      obj.ds = containers.Map;                                                  % Create dependencies map
-      obj.js = containers.Map;                                                  % Create joint spaces map
-      obj.cvs = zeros(0);                                                       % Create connection vector of W
-
-      obj.preview();
+      obj.clear();
     end
 
     function clear(obj)
@@ -101,7 +96,6 @@ classdef SemanticStructurePlot < handle
 
       t.vs = vs;
       t.evs = evs;
-      t.cn = 0;
       t.in = length(obj.vs)+1;
       t.n = ['$' name '$'];
       obj.vs(name) = t;
@@ -161,7 +155,7 @@ classdef SemanticStructurePlot < handle
             end
             obj.js(n) = s;
 
-            j = zeros(1, length(obj.js)+1);
+            j = zeros(1, length(obj.js));
             j(1, 1:length(t.cjs)) = t.cjs;
             j(1, s.in) = 1;
             t.cjs = j;
@@ -207,9 +201,6 @@ classdef SemanticStructurePlot < handle
         wc = [wc ' f_' dsids{i}];
         
         fprintf(dot, ['\tf_' dsids{i} ' -- { ' dsids{i}]);
-        v = obj.vs(dsids{i});
-        v.cn = 1;
-        obj.vs(dsids{i}) = v;
 
         d = obj.ds(dsids{i});
         cons = d.cs;
@@ -221,9 +212,6 @@ classdef SemanticStructurePlot < handle
             obj.js(n) = t;
           else
             fprintf(dot, [' ' t]);
-            v = obj.vs(t);
-            v.cn = 1;
-            obj.vs(t) = v;
           end
         end
         fprintf(dot, ' };\n');
@@ -241,9 +229,6 @@ classdef SemanticStructurePlot < handle
         vsids = obj.js(jsids{i});
         for j=1:length(vsids)
           fprintf(dot, [' ' vsids{j}]);
-          v = obj.vs(vsids{j});
-          v.cn = 1;
-          obj.vs(vsids{j}) = v;
         end
         fprintf(dot, ' };\n');
       end
@@ -259,7 +244,7 @@ classdef SemanticStructurePlot < handle
                ' texlbl="$' vsids{i} '$"'...
                ' style="Vspace/.try"]'];
         v = obj.vs(vsids{i});
-        if (~v.cn)
+        if obj.aj(1,1+v.in)
           wc = [wc ' ' vsids{i}];
         end
         rs = {};
@@ -347,39 +332,50 @@ classdef SemanticStructurePlot < handle
         delete(obj.po.nodes);
       end
 
+      po.plot = gobjects(1,2);
+      po.nodes = gobjects(1, 1+length(obj.vs)+length(obj.ds)+length(obj.js));
+
       obj.computeAdjacencyMatrix();
 
       hold(obj.ax, 'on');
       if length(obj.vs)
-        po.plot = plot(obj.ax, graph(obj.aj), 'Layout', 'layered',...
-                       'NodeLabel', '', 'MarkerSize', 30,...
-                       'NodeColor', 'white',...
-                       'Sources', 1, 'Sinks', [2:length(obj.vs)+1]);
+        po.plot(1) = plot(obj.ax, graph(obj.aj), 'k-o', 'Layout', 'layered',...
+                          'NodeLabel', '', 'MarkerSize', 30, 'Linewidth', 2,...
+                          'Sources', 1, 'Sinks', [2:length(obj.vs)+1]);
+        po.plot(2) = plot(obj.ax, graph(obj.aj), 'ko', 'Layout', 'layered',...
+                          'NodeLabel', '', 'MarkerSize', 28, 'Linewidth', 2,...
+                          'NodeColor', 'w',...
+                          'Sources', 1, 'Sinks', [2:length(obj.vs)+1]);
       else
-        po.plot = plot(obj.ax, graph(obj.aj), 'Layout', 'layered',...
-                       'NodeLabel', '', 'MarkerSize', 30,...
-                       'NodeColor', 'white',...
-                       'Sources', 1);
+        po.plot(1) = plot(obj.ax, graph(obj.aj), 'k-o', 'Layout', 'layered',...
+                          'NodeLabel', '', 'MarkerSize', 30, 'Linewidth', 2,...
+                          'Sources', 1);
+        po.plot(2) = plot(obj.ax, graph(obj.aj), 'ko', 'Layout', 'layered',...
+                          'NodeLabel', '', 'MarkerSize', 28, 'Linewidth', 2,...
+                          'NodeColor', 'w',...
+                          'Sources', 1);
       end
       hold(obj.ax, 'off');
-
-      po.nodes = gobjects(2, 1+length(obj.vs)+length(obj.ds)+length(obj.js));
 
       o = 0;
       id = o+1;
       lb = '$\mathcal{W}$';
-      po.nodes(1,id) = text(obj.ax, po.plot.XData(id), po.plot.YData(id),...
-                            lb, 'Interpreter', 'latex',...
-                            'HorizontalAlignment', 'center');
+      x = po.plot(1).XData(id);
+      y = po.plot(1).YData(id);
+      po.nodes(id) = text(obj.ax, x, y, lb,...
+                          'Interpreter', 'latex',...
+                          'HorizontalAlignment', 'center');
       o = o+1;
 
       vsids = obj.vs.keys;
       for i=1:length(vsids)
         id = o+obj.vs(vsids{i}).in;
         lb = obj.vs(vsids{i}).n;
-        po.nodes(1,id) = text(obj.ax, po.plot.XData(id), po.plot.YData(id),...
-                              lb, 'Interpreter', 'latex',...
-                              'HorizontalAlignment', 'center');
+        x = po.plot(1).XData(id);
+        y = po.plot(1).YData(id);
+        po.nodes(id) = text(obj.ax, x, y, lb,...
+                            'Interpreter', 'latex',...
+                            'HorizontalAlignment', 'center');
       end
       o = o+i;
 
@@ -387,9 +383,11 @@ classdef SemanticStructurePlot < handle
       for i=1:length(dsids)
         id = o+obj.ds(dsids{i}).in;
         lb = obj.ds(dsids{i}).n;
-        po.nodes(1,id) = text(obj.ax, po.plot.XData(id), po.plot.YData(id),...
-                              lb, 'Interpreter', 'latex',...
-                              'HorizontalAlignment', 'center');
+        x = po.plot(1).XData(id);
+        y = po.plot(1).YData(id);
+        po.nodes(id) = text(obj.ax, x, y, lb,...
+                            'Interpreter', 'latex',...
+                            'HorizontalAlignment', 'center');
       end
       o = o+i;
 
@@ -398,9 +396,11 @@ classdef SemanticStructurePlot < handle
       for i=1:length(jsids)
         id = o+obj.js(jsids{i}).in;
         lb = obj.js(jsids{i}).n;
-        po.nodes(1,id) = text(obj.ax, po.plot.XData(id), po.plot.YData(id),...
-                              lb, 'Interpreter', 'latex',...
-                              'HorizontalAlignment', 'center');
+        x = po.plot(1).XData(id);
+        y = po.plot(1).YData(id);
+        po.nodes(id) = text(obj.ax, x, y, lb,...
+                            'Interpreter', 'latex',...
+                            'HorizontalAlignment', 'center');
       end
 
       obj.po = po;

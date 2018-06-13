@@ -216,7 +216,7 @@ classdef Agent < handle
       %
       % arguments:
       %   obj  - The agent.
-      %   name - The basename of the created dot-file.
+      %   name - The basename of the created dot-file (none if omitted).
 
       PC = obj.getValueProj('1C');
       PH = obj.getValueProj('0C');
@@ -302,7 +302,9 @@ classdef Agent < handle
         obj.ssp.preview();
       end
 
-      obj.ssp.createGraph(name);
+      if nargin>1
+        obj.ssp.createGraph(name);
+      end
 
     end
   

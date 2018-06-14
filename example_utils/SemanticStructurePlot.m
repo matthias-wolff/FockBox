@@ -259,9 +259,15 @@ classdef SemanticStructurePlot < handle
         ms = setdiff(v.vs.data(:,1),v.evs.data(:,1));
         if (~isempty(ms))
           if (length(ms) < 4)
-            ms = ['\\{' strjoin(ms, ',') '}'];
+            es = {};
+            for j=1:length(ms)
+              es{end+1} = ms{j}(1:end-length(vsids{i}));
+            end
+            ms = ['\\{' strjoin(es, ',') '}'];
           else
-            ms = ['\\{' ms{1} ',...,' ms{end} '}'];
+            a = ms{1}(1:end-length(vsids{i}));
+            e = ms{end}(1:end-length(vsids{i}));
+            ms = ['\\{' a ',...,' e '}'];
           end
         else
           ms = '';

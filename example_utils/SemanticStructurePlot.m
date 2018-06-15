@@ -295,30 +295,32 @@ classdef SemanticStructurePlot < handle
       end
     end
 
-    function computeAdjacencyMatrix(obj)
+    function computeAdjacencyMatrix(obj,s)
       ovs = 2;
       lvs = length(obj.vs);
-      ods = 2+lvs;
+      ods = ovs+lvs;
       lds = length(obj.ds);
-      ojs = 2+lvs+lds;
+      ojs = ods+lds;
       ljs = length(obj.js);
 
       t = zeros(1+lvs+lds+ljs);
 
+      if nargin<2; s = 1; end;
+
       t(1,ovs:(ovs-1)+lvs) = obj.cvs;
-      t(ovs:(ovs-1)+lvs,1) = obj.cvs';
+      if s; t(ovs:(ovs-1)+lvs,1) = obj.cvs'; end;
       t(1,ods:(ods-1)+lds) = ones(1,lds);
-      t(ods:(ods-1)+lds,1) = ones(lds,1);
+      if s; t(ods:(ods-1)+lds,1) = ones(lds,1); end;
 
       dsids = obj.ds.keys;
       for i=1:length(dsids)
         d = obj.ds(dsids{i});
         lvs = length(d.cvs);
         t((ods-1)+d.in,ovs:(ovs-1)+lvs) = d.cvs;
-        t(ovs:(ovs-1)+lvs,(ods-1)+d.in) = d.cvs';
+        if s; t(ovs:(ovs-1)+lvs,(ods-1)+d.in) = d.cvs'; end;
         ljs = length(d.cjs);
         t((ods-1)+d.in,ojs:(ojs-1)+ljs) = d.cjs;
-        t(ojs:(ojs-1)+ljs,(ods-1)+d.in) = d.cjs';
+        if s; t(ojs:(ojs-1)+ljs,(ods-1)+d.in) = d.cjs'; end;
       end
 
       jsids = obj.js.keys;
@@ -326,7 +328,7 @@ classdef SemanticStructurePlot < handle
         j = obj.js(jsids{i});
         lvs = length(j.cvs);
         t((ojs-1)+j.in,ovs:(ovs-1)+lvs) = j.cvs;
-        t(ovs:(ovs-1)+lvs,(ojs-1)+j.in) = j.cvs';
+        if s; t(ovs:(ovs-1)+lvs,(ojs-1)+j.in) = j.cvs'; end;
       end
 
       obj.aj = t;
@@ -341,25 +343,28 @@ classdef SemanticStructurePlot < handle
       po.plot = gobjects(1,2);
       po.nodes = gobjects(1, 1+length(obj.vs)+length(obj.ds)+length(obj.js));
 
-      obj.computeAdjacencyMatrix();
+      obj.computeAdjacencyMatrix(0);
+      g = digraph(obj.aj);
 
       hold(obj.ax, 'on');
       if length(obj.vs)
-        po.plot(1) = plot(obj.ax, graph(obj.aj), 'k-o', 'Layout', 'layered',...
-                          'NodeLabel', '', 'MarkerSize', 30, 'Linewidth', 2,...
-                          'Sources', 1, 'Sinks', [2:length(obj.vs)+1]);
-        po.plot(2) = plot(obj.ax, graph(obj.aj), 'ko', 'Layout', 'layered',...
-                          'NodeLabel', '', 'MarkerSize', 28, 'Linewidth', 2,...
-                          'NodeColor', 'w',...
-                          'Sources', 1, 'Sinks', [2:length(obj.vs)+1]);
+        po.plot(1) = plot(obj.ax, g, 'k-o', 'Layout', 'layered',...
+                          'NodeLabel', '', 'Linewidth', 2, 'ArrowSize', 1,...
+                          'Sources', 1, 'Sinks', [2:length(obj.vs)+1],...
+                          'MarkerSize', 30);
+        po.plot(2) = plot(obj.ax, g, 'ko', 'Layout', 'layered',...
+                          'NodeLabel', '', 'Linewidth', 2, 'ArrowSize', 1,...
+                          'Sources', 1, 'Sinks', [2:length(obj.vs)+1],...
+                          'MarkerSize', 28, 'NodeColor', 'w');
       else
-        po.plot(1) = plot(obj.ax, graph(obj.aj), 'k-o', 'Layout', 'layered',...
-                          'NodeLabel', '', 'MarkerSize', 30, 'Linewidth', 2,...
-                          'Sources', 1);
-        po.plot(2) = plot(obj.ax, graph(obj.aj), 'ko', 'Layout', 'layered',...
-                          'NodeLabel', '', 'MarkerSize', 28, 'Linewidth', 2,...
-                          'NodeColor', 'w',...
-                          'Sources', 1);
+        po.plot(1) = plot(obj.ax, g, 'k-o', 'Layout', 'layered',...
+                          'NodeLabel', '', 'Linewidth', 2, 'ArrowSize', 1,...
+                          'Sources', 1,...
+                          'MarkerSize', 30);
+        po.plot(2) = plot(obj.ax, g, 'ko', 'Layout', 'layered',...
+                          'NodeLabel', '', 'Linewidth', 2, 'ArrowSize', 1,...
+                          'Sources', 1,...
+                          'MarkerSize', 28, 'NodeColor', 'w');
       end
       hold(obj.ax, 'off');
 

@@ -133,16 +133,17 @@ classdef fockbasis < matlab.mixin.CustomDisplay
       b = isempty(obj.bvec);                                                    % Canonical = no basis vectors 
     end
     
-    function n=getNumSectors(obj)
+    function [n,nmax]=getNumSectors(obj)
       % Determines the number of Fock space sectors covered by this basis.
       %
-      %   n=numSectors(obj)
+      %   [n,name] = numSectors(obj)
       %
       % arguments:
-      %   obj -  A Fock subspace basis.
+      %   obj  -  A Fock subspace basis.
       %
       % returns:
-      %   n   - The number of sectors.
+      %   n    - The number of sectors.
+      %   nmax - The greatest sector index.
       n=0;                                                                      % Max. #tensor products
       m=intmax;                                                                 % Min. #tensor products
       keys = obj.bidm.keys;                                                     % Get basis vector identifiers
@@ -152,6 +153,7 @@ classdef fockbasis < matlab.mixin.CustomDisplay
         n=max(n,l);                                                             %   Aggregate maximum
         m=min(m,l);                                                             %   Aggregate minimum
       end                                                                       % <<
+      nmax = n+1;                                                               % Store greatest sector index
       if (n==m)                                                                 % All basis vectors in one sector >>
         n=2;                                                                    %   Hilbert space + vacuum space
       else                                                                      % << Not all in one sector >>

@@ -257,7 +257,7 @@ classdef fockbasis < matlab.mixin.CustomDisplay
   % == Operators ==
   % https://de.mathworks.com/help/matlab/matlab_oop/implementing-operators-for-your-class.html
   methods
-    
+
     function r=plus(a,b)
       % Vector sum (overloads '+' operator). The vector sum is identical
       % with the direct (or orthogonal) sum iff the bases of the operands
@@ -267,14 +267,14 @@ classdef fockbasis < matlab.mixin.CustomDisplay
       %   r=a+b
       %
       % arguments:
-      %   a - First operator.
-      %   b - Second operator.
+      %   a - First operand, a Fock basis object.
+      %   b - Second operand, a Fock basis object.
       %
       % returns:
-      %   r - The sum of the operators.
+      %   r - The sum of the operands.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockbasis'.
+      %   - If either operand is not a scalar of type 'fockbasis'.
       assert(isscalar(a)&&isa(a,'fockbasis'),...                                % Check if a is a fockbasis scalar
         'a','Must be a scalar of type ''fockbasis''');                          % ...
       assert(isscalar(b)&&isa(b,'fockbasis'),...                                % Check if b is a fockbasis scalar
@@ -285,7 +285,7 @@ classdef fockbasis < matlab.mixin.CustomDisplay
         fock.ERR_NOTIMPL, 'Custom basis vectors');                              % ...
       r = fockbasis([ a.bidm.keys b.bidm.keys ]);                               % Create sum space
     end
-    
+
     function r=horzcat(a,varargin)
       % Kronecker tensor product (overloads '[...]' operator).
       %
@@ -293,14 +293,14 @@ classdef fockbasis < matlab.mixin.CustomDisplay
       %   r=[a1 ... an]
       %
       % arguments:
-      %   a1      - First operator.
-      %   ..., an - Further operators.
+      %   a1      - First operand.
+      %   ..., an - Further operand.
       %
       % returns:
-      %   r - The Kronecker tensor product of the operators.
+      %   r - The Kronecker tensor product of the operaand.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockbasis'.
+      %   - If either operand is not a scalar of type 'fockbasis'.
       % 
       % TODO: Basis vector identifier concatenation should go into a
       %       separate function.
@@ -339,24 +339,48 @@ classdef fockbasis < matlab.mixin.CustomDisplay
       end                                                                       % <<
       r = fockbasis(keysa);                                                     % Create tensor product space
     end  
-    
+
     function r=kron(a,b)
       % Kronecker tensor product.
       %
       %   r=kron(a,b)
       %
       % arguments:
-      %   a - First operator.
-      %   b - Second operator.
+      %   a - First operand.
+      %   b - Second operand.
       %
       % returns:
-      %   r - The Kronecker tensor product of the operators.
+      %   r - The Kronecker tensor product of the operands.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockbasis'.
+      %   - If either operand is not a scalar of type 'fockbasis'.
       r = horzcat(a,b);                                                         % Invoke horizontal concatenation
     end
-    
+
+    function r=mpower(a,b)
+      % Tensor product of order b (overloads '^' operator).
+      %
+      %   r=mpower(a,b)
+      %   r=a^b
+      %
+      % arguments:
+      %   a - First operand, scalar of type 'fockbasis'.
+      %   b - Second operand, a positive integer.
+      %
+      % returns:
+      %   r - The tensor product of order b.
+      %
+      % throws exception:
+      %   - If first operand is not a scalar of type 'fockbasis' or second
+      %     operand is not a positive integer.
+      
+      assert(isscalar(a)&&isa(a,'fockbasis'),fock.ERR_BADARG, ...               % Arg. a must be one fockbasis
+        'a', 'Must be a scalar of type ''fockbasis''.');                        % ...
+      assert(isscalar(b)&&~mod(b,1)&&b>0,fock.ERR_BADARG, ...                   % Arg. b must be one positive integer
+        'b', 'Must be a positive integer scalar.');                             % ...
+      r = a; for i=2:b; r = kron(r,a); end                                      % Compute b-th order tensor product
+    end
+
   end
 
   % == Protected Methods ==

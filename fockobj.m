@@ -128,7 +128,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
 
   end
   
-  % == Operators ==
+  % == Operators and standard functions ==
   % https://de.mathworks.com/help/matlab/matlab_oop/implementing-operators-for-your-class.html
   methods
 
@@ -139,8 +139,8 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %    r=(a==b)
       %
       % arguments:
-      %   a - First operator, a Fock space object.
-      %   b - Second operator, a Fock space object.
+      %   a - First argument, a Fock space object.
+      %   b - Second argument, a Fock space object.
       %
       % returns:
       %   r - True, if a and b are equal, false otherwise
@@ -160,8 +160,8 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %    r=(a~=b)
       %
       % arguments:
-      %   a - First operator, a Fock space object.
-      %   b - Second operator, a Fock space object.
+      %   a - First argument, a Fock space object.
+      %   b - Second argument, a Fock space object.
       %
       % returns:
       %   r - True, if a and b are not equal, false otherwise
@@ -183,8 +183,8 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   transposed array.
       %
       % throws exception:
-      %   - If the argument is a non-numeric scalar but not of type
-      %     'fockobj'.
+      %   - If the argument is a non-numeric scalar but not of type 'fockobj'.
+
       if any(size(a)>1)                                                         % Matrix of fockobj >>
         r = transpose(a);                                                       %   Transpose object matrix
         return;                                                                 %   And that was it...
@@ -201,7 +201,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
         r.data{i,fockobj.VAL} = conj(r.data{i,fockobj.VAL});                    %   Complex conjugation of values
       end                                                                       % <<
     end
-    
+
     function r=uminus(a)
       % Unary minus (overloads unary - operator).
       %
@@ -215,8 +215,8 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   A Fock space object with all values negated.
       %
       % throws exception:
-      %   - If the argument is a non-numeric scalar but not of type
-      %     'fockobj'.
+      %   - If the argument is a non-numeric scalar but not of type 'fockobj'.
+
       if any(size(a)>1)                                                         % Matrix of fockobj >>
         r = transpose(a);                                                       %   Transpose object matrix
         return;                                                                 %   And that was it...
@@ -230,7 +230,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
         r.data{i,fockobj.VAL} = -r.data{i,fockobj.VAL};                         %   Negate values
       end                                                                       % <<
     end
-    
+
     function r=plus(a,b)
       % Direct sum (overloads '+' operator).
       %
@@ -238,14 +238,14 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   r=a+b
       %
       % arguments:
-      %   a - First operator, a Fock space object or 0.
-      %   b - Second operator, a Fock space object or 0.
+      %   a - First argument, a Fock space object or 0.
+      %   b - Second argument, a Fock space object or 0.
       %
       % returns:
-      %   r - The direct (aka. orthogonal) sum of the operators.
+      %   r - The sum of the arguments.
       %
       % throws exception:
-      %   - If either operator is not 0 or a scalar of type 'fockobj'.
+      %   - If either argument is not 0 or a scalar of type 'fockobj'.
       %   - If a and b are Fock space objects and their dimensions are not 
       %     identical.
 
@@ -271,7 +271,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
       r = fockobj.finishMatrixOp(r,H);                                          % Get fockobj for result matrix
       r = r.opretConvert();                                                     % Normalize scalar return values
     end
-    
+
     function r=minus(a,b)
       % Direct sum a+(-b) (overloads '-' operator).
       %
@@ -279,19 +279,20 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   r=a-b
       %
       % arguments:
-      %   a - First operator, a Fock space object or 0.
-      %   b - Second operator, a Fock space object or 0.
+      %   a - First argument, a Fock space object or 0.
+      %   b - Second argument, a Fock space object or 0.
       %
       % returns:
-      %   r - The direct (aka. orthogonal) sum a+(-b).
+      %   r - The sum a+(-b) of the arguments.
       %
       % throws exception:
       %   - If either operator is not 0 or a scalar of type 'fockobj'.
       %   - If a and b are Fock space objects and their dimensions are not 
       %     identical.
+
       r = a+(-b);
     end
-    
+
     function r=mtimes(a,b)
       % Matrix product (overloads '*' operator).
       % 
@@ -299,14 +300,14 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   r=a*b
       %
       % arguments:
-      %   a - First operator, a Fock space object or a numeric scalar.
-      %   b - Second operator, a Fock space object or a numeric scalar.
+      %   a - First argument, a Fock space object or a numeric scalar.
+      %   b - Second argument, a Fock space object or a numeric scalar.
       %
       % returns:
-      %   r - The matrix product of the operators.
+      %   r - The matrix product of the arguments.
       %
       % throws exception:
-      %   - If either operator is not a numric scalar or a scalar of type 
+      %   - If either argument is not a numric scalar or a scalar of type 
       %     'fockobj'.
       %   - If a and b are Fock space objects and their dimensions do not match. 
 
@@ -353,17 +354,18 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   r=a.*b
       %
       % arguments:
-      %   a - First operator, a Fock space object or a numeric scalar.
-      %   b - Second operator, a Fock space object or a numeric scalar.
+      %   a - First argument, a Fock space object or a numeric scalar.
+      %   b - Second argument, a Fock space object or a numeric scalar.
       %
       % returns:
-      %   r - The element-wise product of the operators.
+      %   r - The element-wise product of the argument.
       %
       % throws exception:
-      %   - If either operator is not a numric scalar or a scalar of type 
+      %   - If either argument is not a numric scalar or a scalar of type 
       %     'fockobj'.
       %   - If a and b are Fock space objects and their dimensions are not 
       %     identical.
+
       if isnumeric(a)&&isscalar(a)||isnumeric(b)&&isscalar(b)                   % Either arg. is a numeric scalar >>
         r = mtimes(a,b);                                                        %   Invoke matrix product
       else                                                                      % << Both args. non-numeric >>
@@ -415,7 +417,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
                fock.HREF('fockobj/mpowerf') '?' ]);                             % ...
       r = mpowerf(a,b);                                                         % Invoke general matrix power
     end
-    
+
     function r=horzcat(a,varargin)
       % Kronecker tensor product (overloads '[...]' operator).
       %
@@ -423,14 +425,15 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   r=[a1 ... an]
       %
       % arguments:
-      %   a1      - First operator.
-      %   ..., an - Further operators.
+      %   a1      - First argument.
+      %   ..., an - Further arguments.
       %
       % returns:
-      %   r - The Kronecker tensor product of the operators.
+      %   r - The Kronecker tensor product of the arguments.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockobj'.
+      %   - If either argument is not a scalar of type 'fockobj'.
+
       assert(isscalar(a) && (isa(a,'fockobj') || isnumeric(a)), ...             % Argument #1 is bad
         '#1','Must be a numeric or ''fockobj'' scalar.');                       % ...
       r = a;                                                                    % Result gets a
@@ -476,17 +479,17 @@ classdef fockobj < matlab.mixin.CustomDisplay
       r = fockobj.finishMatrixOp(r,H);                                          % Get fockobj for result matrix
       r = r.opretConvert();                                                     % Normalize scalar return values
     end
-    
+
     function r=mpowerf(a,b)
       % Matrix power supporting matrix exponentials and non-integer powers.
       %
       %   r=mpowerf(a,b)
       %
       % arguments:
-      %   a - First operator.
-      %   b - Second operator.
+      %   a - First argument.
+      %   b - Second argument.
       %
-      %   One of the operators must be a numeric scalar and the other one a
+      %   One of the arguments must be a numeric scalar and the other one a
       %   linear operator.
       %   
       %   NOTE: If a is numeric or b is not an integer, the function realizes 
@@ -496,7 +499,7 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %   r - The matrix power.
       %
       % throws exception:
-      %   - If the operators are invalid (see above).
+      %   - If either argument is invalid (see above).
 
       % Initialize and check                                                    % -------------------------------------
       assert(isscalar(a),fock.ERR_BADARG,'a','Must not be an array');           % Check that a is not an array
@@ -548,21 +551,22 @@ classdef fockobj < matlab.mixin.CustomDisplay
       r = r.opretConvert();                                                     % Normalize scalar return values
 
     end
-    
+
     function r=kron(a,b)
       % Kronecker tensor product.
       %
       %   r=kron(a,b)
       %
       % arguments:
-      %   a - First operator.
-      %   b - Second operator.
+      %   a - First argument, a Fock space object.
+      %   b - Second argument, a Fock space object.
       %
       % returns:
-      %   r - The Kronecker tensor product of the operators.
+      %   r - The Kronecker tensor product of the arguments.
       %
       % throws exception:
-      %   - If either operator is not a scalar of type 'fockobj'.
+      %   - If either argument is not a scalar of type 'fockobj'.
+
       if isnumeric(a)&&isscalar(a); a = fockobj(a); end                         % Convert numeric -> fockobj sclar
       if isnumeric(b)&&isscalar(b); b = fockobj(b); end                         % Convert numeric -> fockobj sclar
       assert(isa(a,'fockobj'),fock.ERR_BADARG,'a', ...                          % a is bad
@@ -608,13 +612,14 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %
       % throws exception:
       %   - If the argument is neither a numeric scalar nor of type 'fockobj'.
+
       a.check();                                                                % Check argument
       r = a;                                                                    % Copy argument to result
       if (isnumeric(a)); r = real(a); return; end                               % Numeric scalar -> return real part
       assert(isa(a,'fockobj'), ...                                              % a must be a fockobj
         sprintf(fock.ERR_BADARG,'a','Must be of type ''fockobj''.'));           % ...
       for i=1:size(r.data,1)                                                    % Loop over cells >>
-        r.data{i,fockobj.VAL} = real(r.data{i,fockobj.VAL});                    %   Real part of values
+        r.data{i,fockobj.VAL} = real(r.data{i,fockobj.VAL});                    %   Real part of value
       end                                                                       % <<
       r = r.removeZeros();                                                      % Remove zero-entries
       r = r.opretConvert();                                                     % Adjust object type
@@ -634,13 +639,41 @@ classdef fockobj < matlab.mixin.CustomDisplay
       %
       % throws exception:
       %   - If the argument is neither a numeric scalar nor of type 'fockobj'.
+
       a.check();                                                                % Check argument
       r = a;                                                                    % Copy argument to result
       if (isnumeric(a)); r = imag(a); return; end                               % Numeric scalar -> return imag. part
       assert(isa(a,'fockobj'), ...                                              % a must be a fockobj
         sprintf(fock.ERR_BADARG,'a','Must be of type ''fockobj''.'));           % ...
       for i=1:size(r.data,1)                                                    % Loop over cells >>
-        r.data{i,fockobj.VAL} = imag(r.data{i,fockobj.VAL});                    %   Imaginary part of values
+        r.data{i,fockobj.VAL} = imag(r.data{i,fockobj.VAL});                    %   Imaginary part of value
+      end                                                                       % <<
+      r = r.removeZeros();                                                      % Remove zero-entries
+      r = r.opretConvert();                                                     % Adjust object type
+    end
+
+    function r=round(a)
+      % Round values.
+      %
+      %   r=round(a)
+      %
+      % arguments:
+      %   a - A Fock space object.
+      %
+      % returns:
+      %   A fock space object whose values are the rounded values of the
+      %   argument's values.
+      %
+      % throws exception:
+      %   - If the argument is neither a numeric scalar nor of type 'fockobj'.
+
+      a.check();                                                                % Check argument
+      r = a;                                                                    % Copy argument to result
+      if (isnumeric(a)); r = imag(a); return; end                               % Numeric scalar -> return imag. part
+      assert(isa(a,'fockobj'), ...                                              % a must be a fockobj
+        sprintf(fock.ERR_BADARG,'a','Must be of type ''fockobj''.'));           % ...
+      for i=1:size(r.data,1)                                                    % Loop over cells >>
+        r.data{i,fockobj.VAL} = round(r.data{i,fockobj.VAL});                   %   Round value
       end                                                                       % <<
       r = r.removeZeros();                                                      % Remove zero-entries
       r = r.opretConvert();                                                     % Adjust object type

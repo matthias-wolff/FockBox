@@ -177,14 +177,14 @@ classdef fockbasis < matlab.mixin.CustomDisplay
     function bid=getBvecId(obj,n)
       % Retrieves a basis vector identifier.
       %
-      %   n=getBvecId(obj,n)
+      %   bid = getBvecId(obj,n)
       %
       % arguments:
       %   obj - A Fock subspace basis.
       %   n   - The index of the basis vector, 1 <= n <= obj.getDim().
       %
       % returns:
-      %   n   - The basis vector identifier.
+      %   bid - The basis vector identifier.
       %
       % throws exception:
       % - If n is not an integer scalar or out of range.

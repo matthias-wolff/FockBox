@@ -1,23 +1,17 @@
 classdef ibmqx
-  % Library of IBM Quantum Experience's gates as Fock space operators.
+  % Library of IBM Q Experience's gates as Fock space operators.
   %
   % author:
   %   Matthias Wolff, BTU Cottbus-Senftenberg
   %
   % TODO:
-  % - Implement measurement!
+  % - Implement measurement with collapse(?)
   %
   % See also fockobj
   
   %% == Constants ==
   
   properties (Constant)
-
-    % |0> qubit state.
-    b0 = fockobj.bket('0');
-
-    % |1> qubit state.
-    b1 = fockobj.bket('1');
 
     % The qubit Fock space basis { |eps>, |0>, |1> }.
     basis = fockbasis({ibmqx.b0 ibmqx.b1});
@@ -54,7 +48,23 @@ classdef ibmqx
   %% == Gate operator and projector getters ==
   
   methods(Static)
-    
+
+    % - Quantum states
+
+    function v=b0
+      % |0> qubit state.
+
+      v = fockobj.bket('0');                                                    % Create ket
+      v.name = '|0>';                                                           % Name it
+    end
+
+    function v=b1
+      % |1> qubit state.
+
+      v = fockobj.bket('1');                                                    % Create ket
+      v.name = '|1>';                                                           % Name it
+    end
+
     % - IBM QX pyhsical gates
     
     function O=U1(lambda)
@@ -331,25 +341,41 @@ classdef ibmqx
   
   methods(Static)
 
-    % TODO: Implement initial checks!
-    function probe(Psi,qubits,shots)
+    function probe(Psi,varargin)
       % Probes the state of qubits in a quantum circuit and displays the result 
       % in a histogram.
       %
-      %   ibmqx.probe(Psi,spec)
+      %   ibmqx.probe(Psi)
+      %   ibmqx.probe(___,Name,Value)
       %
       % arguments:
-      %   Psi    - State of quantum circuit, a fockobk (ket).
-      %   qubits - A vector of zero-based indexes of the qubits to probe
-      %            (optional, default is all qubits)
-      %
+      %   Psi      - State of quantum circuit, a fockobk (ket).
+      %   ___      - Any other argument list.
+      % 
       % returns:
       %   nothing
+      %
+      % additional properties:
+      %   'qubits' - A vector of zero-based indexes of the qubits to probe,
+      %              default is all qubits.
+      %
+      %   'shots'  - Number of simulated shots, default is 1024.
       
       % Initialize and check                                                    % -------------------------------------
+      if ~isa(Psi,'fockobj') || Psi.getType()~=fock.OBJ_KET                     % Psi not a ket vector >>
+        error('Psi must be ket fockobj.');                                      %   Error
+      end                                                                       % <<
       [~,N] = fockbasis(Psi).getNumSectors();                                   % Get number of qubits in circuit
-      if nargin<2; qubits = N-1:-1:0; end                                       % Default probe qubits: all
-      if nargin<3; shots=1024; end                                              % Default number of shots
+      try ibmqx.checkOptions(varargin,{'qubits','shots'});                      % Check option names
+      catch e; error(e.message); end                                            % Invalid option name(s) -> error
+      qubits = ibmqx.getOption(varargin,'qubits',N-1:-1:0);                     % Get indexes of qubits to probe
+      if ~all(ismember(qubits,0:N-1))                                           % There are invalid qubit indexes >>
+        error('Qubit indexes must be integers from interval 0:%d.',N-1);        %   Error
+      end                                                                       % <<
+      shots = ibmqx.getOption(varargin,'shots',1024);                           % Get number of simulated shots
+      if ~isnumeric(shots) || ~isscalar(shots) || rem(shots,1)~=0 || shots<1    % Invalid number of shots >>
+        error('''shots'' must be a positive integer.');                         %   Error
+      end                                                                       % <<
       NQ = length(qubits);                                                      % Get number of probe qubits
       
       % Compute theoretical result                                              % -------------------------------------
@@ -378,10 +404,17 @@ classdef ibmqx
       % Show histgrams                                                          % -------------------------------------
       probs   = round(probs*NN*shots);                                          % Theoretical probabilities -> "counts"
       options = { 'Categories'   , cats         , ...                           % Histogram options
-                  'Normalization', 'probability'};                              % ...
+                  'Normalization', 'probability', ...
+                };                                                              % ...
       histogram('BinCounts',counts,options{1:end},'BarWidth',0.8);              % Show histogram of simulated counts
-      hold on                                                                   % Stay in same plot
+      hold on                                                                   % Stay in plot
       histogram('BinCounts',probs,options{1:end},'BarWidth',0.4);               % Add theoretical probabilities
+      legend(sprintf('simulation of %d shots',shots), ...                       % Set histogram legend
+        'theorerical probabilities');                                           % ...
+      s = 'Quantum circuit state';                                              % Make figure title
+      if ~isempty(Psi.name); s = s + " """ + string(Psi.name) + """"; end       % ...
+      title(s);                                                                 % Set axes title
+      hold off                                                                  % Stop staying in plot
       
     end
 
@@ -419,7 +452,7 @@ classdef ibmqx
         fprintf('    Name  : <strong>%s</strong>\n',O.name);                    %   Print name
       end                                                                       % <<
       fprintf('    Qubits: <strong>%d</strong>\n\n',N);                         % Print number of qubits
-      fprintf(ibmqx.sprintop(O,'prec',prec));                                   % Print operator matrix
+      fprintf(ibmqx.sprintqo(O,'prec',prec));                                   % Print operator matrix
       fprintf('\n');                                                            % Print line break
     end
 
@@ -441,15 +474,15 @@ classdef ibmqx
       
       if nargin<2; prec=4; end                                                  % Default number of sign. digits
       fprintf('%% Generated by FockBox'' ibmqx.latex method\n');                % LaTeX preamble
-      fprintf(ibmqx.sprintop(O,'prec',prec,'mode','latex'));                    % Print operator matrix
+      fprintf(ibmqx.sprintqo(O,'prec',prec,'mode','latex'));                    % Print operator matrix
       fprintf('\n');                                                            % Print line break
     end
 
-    function s=sprintop(O,varargin)
+    function s=sprintqo(O,varargin)
       % Pretty-prints a quantum gate operator or a quantum state into a string.
       % 
-      %   s = ibmqx.sprintop(O)
-      %   s = ibmqx.sprintop(___,Name,Value)
+      %   s = ibmqx.sprintqo(O)
+      %   s = ibmqx.sprintqo(___,Name,Value)
       %
       % arguments:
       %   O           - The operator or quantum state, a fockobj.
@@ -474,9 +507,17 @@ classdef ibmqx
       % See also fockobj
 
       % Initialize                                                              % -------------------------------------
-      s = "";                                                                   % Initialize output string
-      mode  = ibmqx.getModeOption(varargin);                                    % Get printing mode
-      prec  = ibmqx.getPrecOption(varargin);                                    % Get no. of significant digits
+      try ibmqx.checkOptions(varargin,{'prec','mode'});                         % Check option names
+      catch e; error(e.message); end                                            % Invalid option name(s) -> error
+      mode = ibmqx.getOption(varargin,'mode','console');                        % Get printing mode
+      if ~ismember(mode,{'console'; 'latex'; 'plain'})                          % Invalid mode value >>
+        error('''mode'' must be one of ''console'', ''latex'', or ''plain''.'); %   Error
+      end                                                                       % <<
+      prec = ibmqx.getOption(varargin,'prec',4);                                % Get no. of significant digits
+      if ~isnumeric(prec) || ~isscalar(prec) || rem(prec,1)~=0 || prec<0        % Invalid precision value >>
+        error('''prec'' must be a non-negative integer');                       %   Error
+      end                                                                       % <<
+      s     = "";                                                               % Initialize output string
       B     = fockbasis(O);                                                     % Get operator basis
       [~,N] = B.getNumSectors();                                                % Get number of qubits
       om    = ibmqx.opToMatrix(O);                                              % Get operator matrix
@@ -632,9 +673,20 @@ classdef ibmqx
 
     end
 
-    % TODO: Write documentation comment
     function [s,len]=sprintcmplx(v,prec,mode,width)
       % Thrifty-prints a complex value to a formatted string (with markup).
+      %
+      %   [s,len] = sprintcmplx(v,prec,mode,width)
+      %
+      % arguments:
+      %   v     - The value to print.
+      %   prec  - Number of significant digits to print.
+      %   mode  - Mode, one of 'console', 'latex', or 'plain'.
+      %   width - With of printed string (padded with spaces).
+      %
+      % returns:
+      %   s     - The formatted string
+      %   len   - Number of printable characters in string.
 
       % Print complex number                                                    % -------------------------------------
       f  = "%"+sprintf('.%dg',prec);                                            % Format string w/ precision
@@ -667,9 +719,20 @@ classdef ibmqx
 
     end
 
-    % TODO: Write documentation comment
     function [s,len]=sprintvec(name,type,mode,width)
       % Prints a ket or bra identifier to a formatted string (with markup).
+      %
+      %   [s,len] = sprintvec(name,type,mode,width)
+      %
+      % arguments:
+      %   name  - Name of the vector.
+      %   type  - Vector type, 'ket' or 'bra'.
+      %   mode  - Mode, one of 'console', 'latex', or 'plain'.
+      %   width - With of printed string (padded with spaces).
+      %
+      % returns:
+      %   s     - The formatted string
+      %   len   - Number of printable characters in string.
       
       if strcmp(type,'bra')                                                     % Print a bra vector >>
         sl = '<'; sr = '|';                                                     %   Set delimiters
@@ -686,7 +749,6 @@ classdef ibmqx
 
     end
 
-    % TODO: Write line comments
     function s=int2binstr(n,len)
       % Converts an non-negative integer to a binary number string.
       %
@@ -695,51 +757,71 @@ classdef ibmqx
       %
       % arguments:
       %   n   - The integer.
-      %   len - The length of the binary number.
+      %   len - The minimal length of the binary number (padded with
+      %         leading '0's)
       %
       % returns:
       %   s   - The binary number represented by a character array.
 
-      if nargin<2; len=1; end
-      s = "";
-      while n>0
-        b = rem(n,2);
-        s = string(b) + s;
-        n = floor(n/2);
-      end
-      while true
-        if strlength(s)>=len; break; end
-        s = "0"+s;
-      end
-      s = convertStringsToChars(s);
+      if nargin<2; len=1; end                                                   % Default minimal length
+      s = "";                                                                   % Initialize result
+      while n>0                                                                 % Value (still) greater than zero >>
+        b = rem(n,2);                                                           %   Remainder of dividing by 2
+        s = string(b) + s;                                                      %   Prefix result with rem. as char.
+        n = floor(n/2);                                                         %   Integer division by 2
+      end                                                                       % <<
+      while true                                                                % Zero padding loop >>
+        if strlength(s)>=len; break; end                                        %   Result long enough -> break
+        s = "0"+s;                                                              %   Prefix result by "0"
+      end                                                                       % <<
+      s = convertStringsToChars(s);                                             % Convert result to character array
+
     end
 
-    % TODO: Write documentation comment
-    function mode=getModeOption(args)
-      % Get pretty-printing mode from variable argument list.
+    function v=getOption(nvlist,name,default)
+      % Gets an option value from a name-value list.
+      %
+      %   v = ibmqx.getOption(name,default,list)
+      %
+      % arguments:
+      %   nvlist  - The name-value list, a cell vector.
+      %   name    - The option name.
+      %   default - The default value.
+      %
+      % returns:
+      %   v       - The value, default if name is not in the list.
 
-      mode = 'console';                                                         % Default is Matlab console
-      for i=1:2:length(args)                                                     % Loop over key-value pairs >>
-        if strcmp(args{i},'mode')                                               %   Printing mode (normalize) >>
-          if strcmp(args{i+1},'latex'); mode='latex'; end                       %     Latex
-          if strcmp(args{i+1},'plain'); mode='plain'; end                       %     Plain ASCII
+      v = default;                                                              % Set result to default
+      for i=1:2:length(nvlist)                                                  % Loop over name-value pairs >>
+        if strcmp(nvlist{i},name)                                               %   Name found >>
+          v = nvlist{i+1};                                                      %     Get value
+          return;                                                               %     That was it...
         end                                                                     %   <<
       end                                                                       % <<
-    end
 
-    % TODO: Write documentation comment
-    function prec=getPrecOption(args)
-      % Get number of significant digits for pretty-printing from variable 
-      % argument list.
+    end
+    
+    function checkOptions(nvlist,nlist)
+      % Checks names in an option list.
+      %
+      %   ibmqx.checkOptions(nvlist,nlist));
+      %
+      % arguments:
+      %   nvlist - A name-value list.
+      %   nlist  - A list if permissible names.
+      %
+      % returns:
+      %   nothing
+      %
+      % throws exception:
+      %   - If name-value list containes names not mentioned in name list.
       
-      prec = 4;                                                                 % Default is 4
-      for i=1:2:length(args)                                                    % Loop over key-value pairs >>
-        if strcmp(args{i},'prec')                                               %   No. sign. digits to print >>
-          prec = args{i+1};                                                     %     Get value
-        end                                                                     %   <<
+      for i=1:2:length(nvlist)                                                  % Loop over name-value pairs >>
+        assert(ismember(nvlist{i},nlist), ...                                   %   Assert name is in list
+          'Unrecognized option ''%s''.',nvlist{i});                             %   ...
       end                                                                       % <<
     end
-
+    
   end
 
   %% == Strange, draft or dubious... ==

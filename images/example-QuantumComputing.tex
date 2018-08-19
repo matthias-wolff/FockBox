@@ -4,11 +4,21 @@
 %
 % Windows: Needs ImageMagick to convert pdf to png!
 %
-\documentclass[multi,convert={convertexe={convert},density=120}]{standalone}
+\documentclass{standalone}
+%\documentclass[multi,convert={convertexe={convert},density=120}]{standalone}
 \standaloneenv{math}
 \usepackage{amsmath}
 \usepackage{kbordermatrix}
+\def\ket#1{|#1\rangle}
+\def\bra#1{\langle #1|}
+\def\braket#1#2{\langle #1|#2\rangle}
 \begin{document}
+% -----------------------------------------------------------------------------
+\begin{math}\displaystyle
+\begin{pmatrix}
+  0
+\end{pmatrix}
+\end{math}
 % -----------------------------------------------------------------------------
 \begin{math}\displaystyle
   \mathrm{id} =

@@ -5,6 +5,7 @@ classdef ibmqx
   %   Matthias Wolff, BTU Cottbus-Senftenberg
   %
   % TODO:
+  % - Implement swap gate: SWAP(N,i,j)!
   % - Implement measurement with collapse(?)
   %
   % See also fockobj
@@ -360,13 +361,15 @@ classdef ibmqx
       %              default is all qubits.
       %
       %   'shots'  - Number of simulated shots, default is 1024.
+      %
+      %   'name'   - A name (displayed as histogram title).
       
       % Initialize and check                                                    % -------------------------------------
       if ~isa(Psi,'fockobj') || Psi.getType()~=fock.OBJ_KET                     % Psi not a ket vector >>
         error('Psi must be ket fockobj.');                                      %   Error
       end                                                                       % <<
       [~,N] = fockbasis(Psi).getNumSectors();                                   % Get number of qubits in circuit
-      try ibmqx.checkOptions(varargin,{'qubits','shots'});                      % Check option names
+      try ibmqx.checkOptions(varargin,{'qubits','shots','name'});               % Check option names
       catch e; error(e.message); end                                            % Invalid option name(s) -> error
       qubits = ibmqx.getOption(varargin,'qubits',N-1:-1:0);                     % Get indexes of qubits to probe
       if ~all(ismember(qubits,0:N-1))                                           % There are invalid qubit indexes >>
@@ -377,6 +380,7 @@ classdef ibmqx
         error('''shots'' must be a positive integer.');                         %   Error
       end                                                                       % <<
       NQ = length(qubits);                                                      % Get number of probe qubits
+      name = ibmqx.getOption(varargin,'name',Psi.name);                         % Get name
       
       % Compute theoretical result                                              % -------------------------------------
       NN = 2^NQ;                                                                % Number of qubit sub-spaces
@@ -412,7 +416,7 @@ classdef ibmqx
       legend(sprintf('simulation of %d shots',shots), ...                       % Set histogram legend
         'theorerical probabilities');                                           % ...
       s = 'Quantum circuit state';                                              % Make figure title
-      if ~isempty(Psi.name); s = s + " """ + string(Psi.name) + """"; end       % ...
+      if ~isempty(name); s = s + " """ + string(name) + """"; end               % ...
       title(s);                                                                 % Set axes title
       hold off                                                                  % Stop staying in plot
       

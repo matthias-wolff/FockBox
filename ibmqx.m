@@ -5,6 +5,7 @@ classdef ibmqx
   %   Matthias Wolff, BTU Cottbus-Senftenberg
   %
   % TODO:
+  % - Implement alternative method signature O=CNOT(s)!
   % - Implement swap gate: SWAP(N,i,j)!
   % - Implement measurement with collapse(?)
   %
@@ -139,12 +140,18 @@ classdef ibmqx
       O  = ibmqx.opFromMatrix(om,'U3 gate');
     end
     
-    function O=CNOT(N,c,t)
+    function O=CNOT(varargin)
       % CNOT (controlled-NOT) gate operator (2 qubits).
       %
+      %   O = ibmqx.CNOT(s)
       %   O = ibmqx.CNOT(N,c,t)
       %
       % arguments:
+      %   s - Character array specifying the gate layout, a combination of
+      %       - '*': Control qubit (exactly once),
+      %       - 'U': Target qubit (exactly once), and
+      %       - '-': Run-through qubit (arbitrary count).
+      %       Qubits are ordered left to right, i.e., q[n]...q[0].
       %   N - Number of qubits in circuit.
       %   c - Zero-based index of control qubit.
       %   t - Zero-based index of target qubit.
@@ -157,19 +164,45 @@ classdef ibmqx
       %
       % See also fockobj
 
-      % Checks                                                                  % -------------------------------------
-      if (c<0 || c>=N); error('Bad control qubit index.'); end                  % Check control
-      if (t<0 || t>=N); error('Bad target qubit index.'); end                   % Check target
-      if (c==t); error('Control and target qubits cannot be identical.'); end   % ... which must be different
+      % Intialization and checks                                                % -------------------------------------
+      switch nargin                                                             % Branch for number of arguments >>
+        case 1                                                                  %   One: -> first method signature
+          s = varargin{1};                                                      %     Layout specifier
+          if ~ischar(s) || isempty(s)                                           %     Layout spec. empty or not char.>>
+            error('Bad layout, must be a non-empty character array.');          %       Error
+          end                                                                   %     <<
+          m = nnz(s=='*');                                                      %     Count controls
+          if m==0; error('No control qubit specified in layout.'); end          %     No controls -> error
+          if m>1; error('More than one control qubit specified in layout.'); end%     More than one control -> error
+          m = nnz(s=='U');                                                      %     Count targets
+          if m==0; error('No target qubit specified in layout.'); end           %     No targets -> error
+          if m >1; error('More than one target qubit specified in layout.'); end%     More than one control -> error
+          for i=1:length(s)                                                     %     Loop over chars. in layout spec. >>
+            if ~ismember(s(i),'-*U')                                            %       Invalid character >>
+              error('Invalid character ''%c'' in layout',s(i));                 %         Error
+            end                                                                 %       <<
+          end                                                                   %     <<
+        case 3                                                                  %   Three: -> second method signature
+          N = varargin{1};                                                      %     Number of qubits
+          c = varargin{2};                                                      %     Control qubit
+          t = varargin{3};                                                      %     Target qubit
+          if (c<0 || c>=N); error('Bad control qubit index.'); end              %     Check control
+          if (t<0 || t>=N); error('Bad target qubit index.'); end               %     Check target
+          if (c==t)                                                             %     Control and target equal >>
+            error('Control and target qubits cannot be identical.');            %       Error
+          end                                                                   %     <<
+          s      = char(ones(1,N)*'-');                                         %     Make layout specifier for ibmqx.U
+          s(N-c) = '*';                                                         %     ...
+          s(N-t) = 'U';                                                         %     ...
+        otherwise                                                               %   All other cases:
+          error('Impermissible number of arguments.');                          %     Error
+      end
       
       % Create operator                                                         % -------------------------------------
-      layout      = char(ones(1,N)*'-');                                        % Make layout specifier for ibmqx.U
-      layout(N-c) = '*';                                                        % ...
-      layout(N-t) = 'U';                                                        % ...
-      O = ibmqx.CU(ibmqx.X,layout);                                             % Create controlled Pauli-X gate op.
-      layout = strrep(layout,'*',char(8226));                                   % Have some fun with Unicode chars.
-      layout = strrep(layout,'U',char(8853));                                   % ...
-      O.name = sprintf('CNOT (%s)',layout);                                     % Name gate operator
+      O = ibmqx.CU(ibmqx.X,s);                                                  % Create controlled Pauli-X gate op.
+      s = strrep(s,'*',char(8226));                                             % Have some fun with Unicode chars.
+      s = strrep(s,'U',char(8853));                                             % ...
+      O.name = sprintf('CNOT (%s)',s);                                          % Name gate operator
 
     end
 
@@ -228,22 +261,22 @@ classdef ibmqx
 
     end
     
-    function O=CU(U,layout)
+    function O=CU(U,s)
       % Controlled universal gate operator.
       % NOTE: There is NO such gate on IBM QX!
       %
       %   O = ibmqx.CU(U,layout)
       %
       % arguments:
-      %   U      - Gate operator to control, single or multi qubit.
-      %   layout - Character array specifying the gate layout, a combination of
-      %            - '*': Control cubit (exactly once),
-      %            - 'U': Gate to control (exactly once), and
-      %            - '-': Run-through qubit (arbitrary count).
-      %            Qubits are ordered left to right, i.e., q[n]...q[0].
+      %   U - Gate operator to control, single or multi qubit.
+      %   s - Character array specifying the gate layout, a combination of
+      %       - '*': Control qubit (exactly once),
+      %       - 'U': Gate to control (exactly once), and
+      %       - '-': Run-through qubit (arbitrary count).
+      %       Qubits are ordered left to right, i.e., q[n]...q[0].
       %
       % returns:
-      %   O      - The gate operator (a fockobj).
+      %   O - The gate operator (a fockobj).
       %
       % examples:
       %
@@ -263,17 +296,17 @@ classdef ibmqx
       % See also fockobj
 
       % Initialization and checks                                               % -------------------------------------
-      if ~ischar(layout) || isempty(layout)                                     % Layout specifier empty or not char.>>
+      if ~ischar(s) || isempty(s)                                               % Layout specifier empty or not char.>>
         error('Bad layout, must be a non-empty character array.');              %   Error
       end                                                                       % <<
-      n = length(layout);                                                       % Get length of layout specifier
-      m = nnz(layout=='*');                                                     % Count controls
+      n = length(s);                                                            % Get length of layout specifier
+      m = nnz(s=='*');                                                          % Count controls
       if m==0; error('No control qubits specified in layout.'); end             % No controls -> error
       if m >1; error('More than one control qubit specified in layout.'); end   % More than one control -> error
-      if ~ismember('U',layout); warning('No target specified in layout.'); end  % No target(s) -> warning
+      if ~ismember('U',s); warning('No target specified in layout.'); end       % No target(s) -> warning
       for i=1:n                                                                 % Loop over chars. in layout spec. >>
-        if ~ismember(layout(i),'-*U')                                           %   Invalid character >>
-          error('Invalid character ''%c'' in layout',layout(i));                %     Error
+        if ~ismember(s(i),'-*U')                                                %   Invalid character >>
+          error('Invalid character ''%c'' in layout',s(i));                     %     Error
         end                                                                     %   <<
       end                                                                       % <<
       [~,nU] = fockbasis(U).getNumSectors();                                    % Get number of qubits in gate U
@@ -283,10 +316,10 @@ classdef ibmqx
 
       % Create operator                                                         % -------------------------------------
       for i=0:n-1                                                               % Loop over circuit qubits >>
-        if layout(n-i)=='*'                                                     %   q[n-i] is the control qubit >> 1)
+        if s(n-i)=='*'                                                          %   q[n-i] is the control qubit >> 1)
           O1 = kron(ibmqx.b0*ibmqx.b0',O1);                                     %     Build left summand of operator
           O2 = kron(ibmqx.b1*ibmqx.b1',O2);                                     %     Build right summand of operator
-        elseif layout(n-i)=='U'                                                 %   << q[n-1] is the target qubit >> 1)
+        elseif s(n-i)=='U'                                                      %   << q[n-1] is the target qubit >> 1)
           O1 = kron(idU,O1);                                                    %     Build left summand of operator
           O2 = kron(  U,O2);                                                    %     Build right summand of operator
         else                                                                    %   << Other qubits >>
@@ -295,7 +328,7 @@ classdef ibmqx
         end                                                                     %   <<
       end                                                                       % <<
       O = O1+O2;                                                                % Create operator
-      O.name = strrep(string(layout),'U',sprintf('(%s)',U.name));               % Name operator
+      O.name = strrep(string(s),'U',sprintf('(%s)',U.name));                    % Name operator
       
       % Remarks
       % 1) (N-i) mirrors the order of the tensor product factors as q[N] is
@@ -304,35 +337,35 @@ classdef ibmqx
 
     % - Sub-space projectors
     
-    function P=proj(spec)
+    function P=proj(s)
       % Creates projector on a sub-space of a quantum cicuit's state space.
       %
       %   P = ibmqx.proj(spec)
       %
       % arguments:
-      %   spec - Character array specifying the sub-space, a combination of
-      %          - '0': Qubit is in state |0>,
-      %          - '1': Qubit is in state |1>, and
-      %          - '*': Qubit is in any state.
-      %          Qubits are ordered left to right, i.e., q[n]...q[0].
+      %   s - Character array specifying the sub-space, a combination of
+      %       - '0': Qubit is in state |0>,
+      %       - '1': Qubit is in state |1>, and
+      %       - '*': Qubit is in any state.
+      %       Qubits are ordered left to right, i.e., q[n]...q[0].
       %
       % returns:
-      %   P      - The projector (a fockobj).
+      %   P - The projector (a fockobj).
       % 
       % example:
       %
       %   ibmqx.proj('**0*1') returns the projector of the sub-space of the
       %   state space of a five qubit circuit where q[0]=|1> and q[2]=|0>.
 
-      N  = strlength(spec);
-      P  = 1;
-      for i=0:N-1
-        if     spec(N-i)=='0'; P = kron(ibmqx.b0*ibmqx.b0',P);
-        elseif spec(N-i)=='1'; P = kron(ibmqx.b1*ibmqx.b1',P);
-        else                 ; P = kron(ibmqx.id          ,P);
-        end
-      end
-      P.name = sprintf('Sub-space projector (%s)',spec);
+      N = strlength(s);                                                         % Get number of qubits
+      P = 1;                                                                    % Initialize projector
+      for i=0:N-1                                                               % Loop over qubits >>
+        if     s(N-i)=='0'; P = kron(ibmqx.b0*ibmqx.b0',P);                     %   Project on q[i]=|0>
+        elseif s(N-i)=='1'; P = kron(ibmqx.b1*ibmqx.b1',P);                     %   Project on q[i]=|1>
+        else              ; P = kron(ibmqx.id          ,P);                     %   Do not project on q[i]
+        end                                                                     %   ...
+      end                                                                       % <<
+      P.name = sprintf('Sub-space projector (%s)',s);                           % Name projector
 
     end
 
@@ -342,11 +375,11 @@ classdef ibmqx
   
   methods(Static)
 
-    function probe(Psi,varargin)
+    function probe(psi,varargin)
       % Probes the state of qubits in a quantum circuit and displays the result 
       % in a histogram.
       %
-      %   ibmqx.probe(Psi)
+      %   ibmqx.probe(psi)
       %   ibmqx.probe(___,Name,Value)
       %
       % arguments:
@@ -365,10 +398,10 @@ classdef ibmqx
       %   'name'   - A name (displayed as histogram title).
       
       % Initialize and check                                                    % -------------------------------------
-      if ~isa(Psi,'fockobj') || Psi.getType()~=fock.OBJ_KET                     % Psi not a ket vector >>
+      if ~isa(psi,'fockobj') || psi.getType()~=fock.OBJ_KET                     % Psi not a ket vector >>
         error('Psi must be ket fockobj.');                                      %   Error
       end                                                                       % <<
-      [~,N] = fockbasis(Psi).getNumSectors();                                   % Get number of qubits in circuit
+      [~,N] = fockbasis(psi).getNumSectors();                                   % Get number of qubits in circuit
       try ibmqx.checkOptions(varargin,{'qubits','shots','name'});               % Check option names
       catch e; error(e.message); end                                            % Invalid option name(s) -> error
       qubits = ibmqx.getOption(varargin,'qubits',N-1:-1:0);                     % Get indexes of qubits to probe
@@ -380,7 +413,7 @@ classdef ibmqx
         error('''shots'' must be a positive integer.');                         %   Error
       end                                                                       % <<
       NQ = length(qubits);                                                      % Get number of probe qubits
-      name = ibmqx.getOption(varargin,'name',Psi.name);                         % Get name
+      name = ibmqx.getOption(varargin,'name',psi.name);                         % Get name
       
       % Compute theoretical result                                              % -------------------------------------
       NN = 2^NQ;                                                                % Number of qubit sub-spaces
@@ -392,7 +425,7 @@ classdef ibmqx
         pspec = char(ones(1,N)*'*');                                            %   Make sub-space projector specifier
         for j=0:NQ-1; pspec(N-qubits(NQ-j))=cbits(NQ-j); end                    %   ...
         P = ibmqx.proj(pspec);                                                  %   Make sub-space projector
-        probs(i+1) = Psi'*P*Psi;                                                %   Compute sub-space probability
+        probs(i+1) = psi'*P*psi;                                                %   Compute sub-space probability
       end                                                                       % <<
 
       % Simulate shot statistics                                                % -------------------------------------

@@ -5,7 +5,7 @@ classdef ibmqx
   %   Matthias Wolff, BTU Cottbus-Senftenberg
   %
   % TODO:
-  % - Implement alternative method signature O=CNOT(s)!
+  % - Implement barrier!
   % - Implement swap gate: SWAP(N,i,j)!
   % - Implement measurement with collapse(?)
   %

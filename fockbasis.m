@@ -205,6 +205,12 @@ classdef fockbasis < matlab.mixin.CustomDisplay
       % returns:
       %   m   - A sparse matrix representing a in the basis of obj.
       %
+      % Examples:
+      %
+      %   - Display full matrix realizing fockobj f
+      %
+      %     full(fockbasis(f).realize(f)) 
+      %
       % See also unrealize
       assert(isa(f,'fockobj'),fock.ERR_BADARG,'f', ...                          % Argument f must be a fpckobj
         'Must be of type ''fockobj''.');                                        % ...
@@ -231,7 +237,7 @@ classdef fockbasis < matlab.mixin.CustomDisplay
     function f=unrealize(obj,m)
       % Converts a (sparse) matrix to a fock space object.
       %
-      %   f=fockobj.unrealizeFrom(obj,m)
+      %   f=fockobj.unrealize(obj,m)
       %
       % arguments:
       %   obj - The Fock subspace basis to unrealize from.

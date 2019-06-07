@@ -1,5 +1,5 @@
-classdef ibmqx
-  % Library of IBM Q Experience's gates as Fock space operators.
+classdef qcirc
+  % Library of quantum gates as Fock space operators.
   %
   % author:
   %   Matthias Wolff, BTU Cottbus-Senftenberg
@@ -16,34 +16,34 @@ classdef ibmqx
   properties (Constant)
 
     % The qubit Fock space basis { |eps>, |0>, |1> }.
-    basis = fockbasis({ibmqx.b0 ibmqx.b1});
+    basis = fockbasis({qcirc.b0 qcirc.b1});
     
     % Identity gate operator (1 qubit).
-    id = ibmqx.opFromMatrix([1 0; 0 1],'Identity');
+    id = qcirc.opFromMatrix([1 0; 0 1],'Identity');
 
     % Pauli-X gate operator (1 qubit).
-    X = ibmqx.opFromMatrix([0 1; 1 0],'Pauli-X');
+    X = qcirc.opFromMatrix([0 1; 1 0],'Pauli-X');
 
     % Pauli-Y gate operator (1 qubit).
-    Y = ibmqx.opFromMatrix([0 -1i; 1i 0],'Pauli-Y');
+    Y = qcirc.opFromMatrix([0 -1i; 1i 0],'Pauli-Y');
   
     % Pauli-Z gate operator (1 qubit).
-    Z = ibmqx.opFromMatrix([1 0; 0 -1],'Pauli-Z');
+    Z = qcirc.opFromMatrix([1 0; 0 -1],'Pauli-Z');
 
     % Hadamard gate operator (1 qubit).
-    H = ibmqx.opFromMatrix(1/sqrt(2)*[1 1; 1 -1],'Hadamard');
+    H = qcirc.opFromMatrix(1/sqrt(2)*[1 1; 1 -1],'Hadamard');
 
-    % Phase gate S operator (1 qubit), S = mpowerf(ibmqx.Z,1/2).
+    % Phase gate S operator (1 qubit), S = mpowerf(qcirc.Z,1/2).
     % 
     % remarks:
-    %   - The inverse is obtained by ibmqx.S'
-    S = ibmqx.opFromMatrix([1 0; 0 1i],'S phase');
+    %   - The inverse is obtained by qcirc.S'
+    S = qcirc.opFromMatrix([1 0; 0 1i],'S phase');
 
-    % Phase gate T operator (1 qubit), T = mpowerf(ibmqx.S,1/2).
+    % Phase gate T operator (1 qubit), T = mpowerf(qcirc.S,1/2).
     % 
     % remarks:
-    %   - The inverse is obtained by ibmqx.T'
-    T = ibmqx.opFromMatrix([1 0; 0 (1+1i)/sqrt(2)],'T phase');
+    %   - The inverse is obtained by qcirc.T'
+    T = qcirc.opFromMatrix([1 0; 0 (1+1i)/sqrt(2)],'T phase');
 
   end
   
@@ -67,12 +67,12 @@ classdef ibmqx
       v.name = '|1>';                                                           % Name it
     end
 
-    % - IBM QX pyhsical gates
+    % - Physical gates of IBM Q
     
     function O=U1(lambda)
-      % Gets the operator of IBM QX's first physical gate (1 qubit).
+      % Gets the operator of IBM Q's physical U1 gate (1 qubit).
       %
-      %   O = ibmqx.U1(lambda)
+      %   O = qcirc.U1(lambda)
       %
       % The operator matrix is
       %
@@ -85,16 +85,17 @@ classdef ibmqx
       % returns:
       %   O      - The gate operator (a fockobj).
       %
-      % See also fockobj
+      % See also fockobj, 
+      % https://quantum-computing.ibm.com/support/guides/introduction-to-quantum-circuits
 
       om = [1 0; 0 exp(1i*lambda)];
-      O  = ibmqx.opFromMatrix(om,'U1 gate');
+      O  = qcirc.opFromMatrix(om,'U1 gate');
     end
     
     function O=U2(lambda,phi)
-      % Gets the operator of IBM QX's second physical gate (1 qubit).
+      % Gets the operator of IBM Q's physical U2 gate (1 qubit).
       %
-      %   O = ibmqx.U2(lambda,phi)
+      %   O = qcirc.U2(lambda,phi)
       %
       % The operator matrix is 
       %
@@ -108,17 +109,19 @@ classdef ibmqx
       % returns:
       %   O      - The gate operator (a fockobj).
       %
-      % See also fockobj
+      % See also fockobj,
+      % https://quantum-computing.ibm.com/support/guides/introduction-to-quantum-circuits
+
 
       om = [1           -exp(1i*lambda)
             exp(1i*phi)  exp(1i*(lambda+phi))];
-      O  = 1/sqrt(2)*ibmqx.opFromMatrix(om,'U2 gate');
+      O  = 1/sqrt(2)*qcirc.opFromMatrix(om,'U2 gate');
     end
     
     function O=U3(lambda,phi,theta)
-      % Gets the operator of IBM QX's third physical gate (1 qubit).
+      % Gets the operator of IBM Q's physical U3 gate (1 qubit).
       %
-      %   O = ibmqx.U3(lambda,phi,theta)
+      %   O = qcirc.U3(lambda,phi,theta)
       %
       % The operator matrix is 
       %
@@ -133,18 +136,19 @@ classdef ibmqx
       % returns:
       %   O      - The gate operator (a fockobj).
       %
-      % See also fockobj
+      % See also fockobj,
+      % https://quantum-computing.ibm.com/support/guides/introduction-to-quantum-circuits
 
       om = [ cos(theta/2)             -exp(1i*lambda)*sin(theta/2)
              exp(1i*phi)*sin(theta/2)  exp(1i*lambda+1i*phi)*cos(theta/2)];
-      O  = ibmqx.opFromMatrix(om,'U3 gate');
+      O  = qcirc.opFromMatrix(om,'U3 gate');
     end
     
     function O=CNOT(varargin)
       % CNOT (controlled-NOT) gate operator (2 qubits).
       %
-      %   O = ibmqx.CNOT(s)
-      %   O = ibmqx.CNOT(N,c,t)
+      %   O = qcirc.CNOT(s)
+      %   O = qcirc.CNOT(N,c,t)
       %
       % arguments:
       %   s - Character array specifying the gate layout, a combination of
@@ -158,9 +162,6 @@ classdef ibmqx
       %
       % returns:
       %   O - The gate operator (a fockobj).
-      %
-      % remarks:
-      %   - This method does not account for physical restrictions of IBM QX!
       %
       % See also fockobj
 
@@ -191,7 +192,7 @@ classdef ibmqx
           if (c==t)                                                             %     Control and target equal >>
             error('Control and target qubits cannot be identical.');            %       Error
           end                                                                   %     <<
-          s      = char(ones(1,N)*'-');                                         %     Make layout specifier for ibmqx.U
+          s      = char(ones(1,N)*'-');                                         %     Make layout specifier for qcirc.U
           s(N-c) = '*';                                                         %     ...
           s(N-t) = 'U';                                                         %     ...
         otherwise                                                               %   All other cases:
@@ -199,21 +200,20 @@ classdef ibmqx
       end
       
       % Create operator                                                         % -------------------------------------
-      O = ibmqx.CU(ibmqx.X,s);                                                  % Create controlled Pauli-X gate op.
+      O = qcirc.CU(qcirc.X,s);                                                  % Create controlled Pauli-X gate op.
       s = strrep(s,'*',char(8226));                                             % Have some fun with Unicode chars.
       s = strrep(s,'U',char(8853));                                             % ...
       O.name = sprintf('CNOT (%s)',s);                                          % Name gate operator
 
     end
 
-    % - Fantasy gates I'd love to have
+    % - Fantasy gates I'd love to have physically
 
     function O=U(om,name)
       % Universal gate operator.
-      % NOTE: There is NO such gate on IBM QX!
       % 
-      %   O = ibmqx.U(om)
-      %   O = ibmqx.U(om,name)
+      %   O = qcirc.U(om)
+      %   O = qcirc.U(om,name)
       %
       % arguments:
       %   om   - A unitary gate operator matrix in one of the forms
@@ -249,12 +249,12 @@ classdef ibmqx
       
       if nargin<2; name=''; end                                                 % Default name is empty
       try                                                                       % Try to >>
-        O = ibmqx.opFromMatrix(om,name);                                        %   Create operator from matrix
+        O = qcirc.opFromMatrix(om,name);                                        %   Create operator from matrix
       catch e                                                                   % << Failed >>
         error(e.message);                                                       %   Error
       end                                                                       % <<
       try                                                                       % Try to >>
-        ibmqx.check(O);                                                         %   Check operator
+        qcirc.check(O);                                                         %   Check operator
       catch e                                                                   % << Failed >>
         error('Matrix is not unitary.');                                        %   Error
       end                                                                       % <<
@@ -263,9 +263,8 @@ classdef ibmqx
     
     function O=CU(U,s)
       % Controlled universal gate operator.
-      % NOTE: There is NO such gate on IBM QX!
       %
-      %   O = ibmqx.CU(U,layout)
+      %   O = qcirc.CU(U,layout)
       %
       % arguments:
       %   U - Gate operator to control, single or multi qubit.
@@ -282,16 +281,16 @@ classdef ibmqx
       %
       %   - CNOT gate with control q[0] and target q[1]:
       %
-      %       CCNOT01 = ibmqx.CU(ibmqx.X,'U*')
+      %       CCNOT01 = qcirc.CU(qcirc.X,'U*')
       %
       %   - CNOT gate with control q[2], target q[0], and run-through q[1]:
       %
-      %       CCNOT20 = ibmqx.CU(ibmqx.X,'*-U')
+      %       CCNOT20 = qcirc.CU(qcirc.X,'*-U')
       %
       %   - Calls may be nested. E.g., a Toffoli gate with controls q[1], q[2] 
       %     and target q[0] is obtained by:
       %
-      %       CCCNOT120 = ibmqx.CU(ibmqx.CU(ibmqx.X,'*U'),'*U')
+      %       CCCNOT120 = qcirc.CU(qcirc.CU(qcirc.X,'*U'),'*U')
       %
       % See also fockobj
 
@@ -310,21 +309,21 @@ classdef ibmqx
         end                                                                     %   <<
       end                                                                       % <<
       [~,nU] = fockbasis(U).getNumSectors();                                    % Get number of qubits in gate U
-      idU = ibmqx.id; for i=2:nU; idU = kron(idU,ibmqx.id); end                 % Make nU-qubit identity operator
+      idU = qcirc.id; for i=2:nU; idU = kron(idU,qcirc.id); end                 % Make nU-qubit identity operator
       O1  = 1;                                                                  % Left summand of operator
       O2  = 1;                                                                  % Right summand of operator
 
       % Create operator                                                         % -------------------------------------
       for i=0:n-1                                                               % Loop over circuit qubits >>
         if s(n-i)=='*'                                                          %   q[n-i] is the control qubit >> 1)
-          O1 = kron(ibmqx.b0*ibmqx.b0',O1);                                     %     Build left summand of operator
-          O2 = kron(ibmqx.b1*ibmqx.b1',O2);                                     %     Build right summand of operator
+          O1 = kron(qcirc.b0*qcirc.b0',O1);                                     %     Build left summand of operator
+          O2 = kron(qcirc.b1*qcirc.b1',O2);                                     %     Build right summand of operator
         elseif s(n-i)=='U'                                                      %   << q[n-1] is the target qubit >> 1)
           O1 = kron(idU,O1);                                                    %     Build left summand of operator
           O2 = kron(  U,O2);                                                    %     Build right summand of operator
         else                                                                    %   << Other qubits >>
-          O1 = kron(ibmqx.id,O1);                                               %     Build left summand of operator
-          O2 = kron(ibmqx.id,O2);                                               %     Build right summand of operator
+          O1 = kron(qcirc.id,O1);                                               %     Build left summand of operator
+          O2 = kron(qcirc.id,O2);                                               %     Build right summand of operator
         end                                                                     %   <<
       end                                                                       % <<
       O = O1+O2;                                                                % Create operator
@@ -340,7 +339,7 @@ classdef ibmqx
     function P=proj(s)
       % Creates projector on a sub-space of a quantum cicuit's state space.
       %
-      %   P = ibmqx.proj(spec)
+      %   P = qcirc.proj(spec)
       %
       % arguments:
       %   s - Character array specifying the sub-space, a combination of
@@ -354,15 +353,15 @@ classdef ibmqx
       % 
       % example:
       %
-      %   ibmqx.proj('**0*1') returns the projector of the sub-space of the
+      %   qcirc.proj('**0*1') returns the projector of the sub-space of the
       %   state space of a five qubit circuit where q[0]=|1> and q[2]=|0>.
 
       N = strlength(s);                                                         % Get number of qubits
       P = 1;                                                                    % Initialize projector
       for i=0:N-1                                                               % Loop over qubits >>
-        if     s(N-i)=='0'; P = kron(ibmqx.b0*ibmqx.b0',P);                     %   Project on q[i]=|0>
-        elseif s(N-i)=='1'; P = kron(ibmqx.b1*ibmqx.b1',P);                     %   Project on q[i]=|1>
-        else              ; P = kron(ibmqx.id          ,P);                     %   Do not project on q[i]
+        if     s(N-i)=='0'; P = kron(qcirc.b0*qcirc.b0',P);                     %   Project on q[i]=|0>
+        elseif s(N-i)=='1'; P = kron(qcirc.b1*qcirc.b1',P);                     %   Project on q[i]=|1>
+        else              ; P = kron(qcirc.id          ,P);                     %   Do not project on q[i]
         end                                                                     %   ...
       end                                                                       % <<
       P.name = sprintf('Sub-space projector (%s)',s);                           % Name projector
@@ -379,8 +378,8 @@ classdef ibmqx
       % Probes the state of qubits in a quantum circuit and displays the result 
       % in a histogram.
       %
-      %   ibmqx.probe(psi)
-      %   ibmqx.probe(___,Name,Value)
+      %   qcirc.probe(psi)
+      %   qcirc.probe(___,Name,Value)
       %
       % arguments:
       %   Psi      - State of quantum circuit, a fockobk (ket).
@@ -402,29 +401,29 @@ classdef ibmqx
         error('Psi must be ket fockobj.');                                      %   Error
       end                                                                       % <<
       [~,N] = fockbasis(psi).getNumSectors();                                   % Get number of qubits in circuit
-      try ibmqx.checkOptions(varargin,{'qubits','shots','name'});               % Check option names
+      try qcirc.checkOptions(varargin,{'qubits','shots','name'});               % Check option names
       catch e; error(e.message); end                                            % Invalid option name(s) -> error
-      qubits = ibmqx.getOption(varargin,'qubits',N-1:-1:0);                     % Get indexes of qubits to probe
+      qubits = qcirc.getOption(varargin,'qubits',N-1:-1:0);                     % Get indexes of qubits to probe
       if ~all(ismember(qubits,0:N-1))                                           % There are invalid qubit indexes >>
         error('Qubit indexes must be integers from interval 0:%d.',N-1);        %   Error
       end                                                                       % <<
-      shots = ibmqx.getOption(varargin,'shots',1024);                           % Get number of simulated shots
+      shots = qcirc.getOption(varargin,'shots',1024);                           % Get number of simulated shots
       if ~isnumeric(shots) || ~isscalar(shots) || rem(shots,1)~=0 || shots<1    % Invalid number of shots >>
         error('''shots'' must be a positive integer.');                         %   Error
       end                                                                       % <<
       NQ = length(qubits);                                                      % Get number of probe qubits
-      name = ibmqx.getOption(varargin,'name',psi.name);                         % Get name
+      name = qcirc.getOption(varargin,'name',psi.name);                         % Get name
       
       % Compute theoretical result                                              % -------------------------------------
       NN = 2^NQ;                                                                % Number of qubit sub-spaces
       cats = cell(1,NN);                                                        % Histogram category names
       probs = zeros(1,NN);                                                      % Theoretical probabilities
       for i=0:NN-1                                                              % Loop over probe qubit sub-spaces >>
-        cbits = ibmqx.int2binstr(i,NQ);                                         %   Get probe qubit combination
+        cbits = qcirc.int2binstr(i,NQ);                                         %   Get probe qubit combination
         cats{i+1} = cbits;                                                      %   Set histogram category name
         pspec = char(ones(1,N)*'*');                                            %   Make sub-space projector specifier
         for j=0:NQ-1; pspec(N-qubits(NQ-j))=cbits(NQ-j); end                    %   ...
-        P = ibmqx.proj(pspec);                                                  %   Make sub-space projector
+        P = qcirc.proj(pspec);                                                  %   Make sub-space projector
         probs(i+1) = psi'*P*psi;                                                %   Compute sub-space probability
       end                                                                       % <<
 
@@ -464,8 +463,8 @@ classdef ibmqx
     function disp(O)
       % Pretty-prints a quantum gate operator or a quantum state.
       %
-      %   ibmqx.disp(O)
-      %   ibmqx.disp(O,prec)
+      %   qcirc.disp(O)
+      %   qcirc.disp(O,prec)
       %
       % arguments:
       %   O    - The operator or quantum state, a fockobj.
@@ -484,12 +483,12 @@ classdef ibmqx
         case fock.OBJ_BRA; s = 'quantum state (bra)';                           %   Bra
         otherwise; error('Invalid argument.');                                  %   Otherwise -> error
       end                                                                       % <<
-      fprintf('  %s <strong>%s</strong>\n\n',fock.HREF('ibmqx'),s);             % Print headline
+      fprintf('  %s <strong>%s</strong>\n\n',fock.HREF('qcirc'),s);             % Print headline
       if ~strcmp(string(O.name),"")                                             % Non-empty name >>
         fprintf('    Name  : <strong>%s</strong>\n',O.name);                    %   Print name
       end                                                                       % <<
       fprintf('    Qubits: <strong>%d</strong>\n\n',N);                         % Print number of qubits
-      fprintf(ibmqx.sprintqo(O,'prec',prec));                                   % Print operator matrix
+      fprintf(qcirc.sprintqo(O,'prec',prec));                                   % Print operator matrix
       fprintf('\n');                                                            % Print line break
     end
 
@@ -497,8 +496,8 @@ classdef ibmqx
       % Generates LaTeX code for pretty-printing a quantum gate operator or a 
       % quantum state.
       %
-      %   ibmqx.latex(O)
-      %   ibmqx.latex(O,prec)
+      %   qcirc.latex(O)
+      %   qcirc.latex(O,prec)
       %
       % arguments:
       %   O    - The operator or quantum state, a fockobj.
@@ -510,16 +509,16 @@ classdef ibmqx
       % See also fockobj
       
       if nargin<2; prec=4; end                                                  % Default number of sign. digits
-      fprintf('%% Generated by FockBox'' ibmqx.latex method\n');                % LaTeX preamble
-      fprintf(ibmqx.sprintqo(O,'prec',prec,'mode','latex'));                    % Print operator matrix
+      fprintf('%% Generated by FockBox'' qcirc.latex method\n');                % LaTeX preamble
+      fprintf(qcirc.sprintqo(O,'prec',prec,'mode','latex'));                    % Print operator matrix
       fprintf('\n');                                                            % Print line break
     end
 
     function s=sprintqo(O,varargin)
       % Pretty-prints a quantum gate operator or a quantum state into a string.
       % 
-      %   s = ibmqx.sprintqo(O)
-      %   s = ibmqx.sprintqo(___,Name,Value)
+      %   s = qcirc.sprintqo(O)
+      %   s = qcirc.sprintqo(___,Name,Value)
       %
       % arguments:
       %   O           - The operator or quantum state, a fockobj.
@@ -544,31 +543,31 @@ classdef ibmqx
       % See also fockobj
 
       % Initialize                                                              % -------------------------------------
-      try ibmqx.checkOptions(varargin,{'prec','mode'});                         % Check option names
+      try qcirc.checkOptions(varargin,{'prec','mode'});                         % Check option names
       catch e; error(e.message); end                                            % Invalid option name(s) -> error
-      mode = ibmqx.getOption(varargin,'mode','console');                        % Get printing mode
+      mode = qcirc.getOption(varargin,'mode','console');                        % Get printing mode
       if ~ismember(mode,{'console'; 'latex'; 'plain'})                          % Invalid mode value >>
         error('''mode'' must be one of ''console'', ''latex'', or ''plain''.'); %   Error
       end                                                                       % <<
-      prec = ibmqx.getOption(varargin,'prec',4);                                % Get no. of significant digits
+      prec = qcirc.getOption(varargin,'prec',4);                                % Get no. of significant digits
       if ~isnumeric(prec) || ~isscalar(prec) || rem(prec,1)~=0 || prec<0        % Invalid precision value >>
         error('''prec'' must be a non-negative integer');                       %   Error
       end                                                                       % <<
       s     = "";                                                               % Initialize output string
       B     = fockbasis(O);                                                     % Get operator basis
       [~,N] = B.getNumSectors();                                                % Get number of qubits
-      om    = ibmqx.opToMatrix(O);                                              % Get operator matrix
+      om    = qcirc.opToMatrix(O);                                              % Get operator matrix
 
       % Preflight: Determine column widths                                      % -------------------------------------
       cw = zeros(size(om,2)+1,1);                                               % Initialize column with array
       for j=1:size(om,1)                                                        % Loop over op. matrix columns >>
-        [~,l]   = ibmqx.sprintvec(ibmqx.int2binstr(j-1,N),'bra',mode);          %   Get printable length
+        [~,l]   = qcirc.sprintvec(qcirc.int2binstr(j-1,N),'bra',mode);          %   Get printable length
         cw(1)   = max(cw(1),l);                                                 %   Aggregate with of header column
         cw(j+1) = l;                                                            %   Initialize with if header row
       end                                                                       % <<
       for i=1:size(om,1)                                                        % Loop over op. matrix rows >>
         for j=1:size(om,2)                                                      %   Loop over op. matrix columns >>
-          [~,l] = ibmqx.sprintcmplx(om(i,j),prec,mode);                         %     Get printable len. of val. string
+          [~,l] = qcirc.sprintcmplx(om(i,j),prec,mode);                         %     Get printable len. of val. string
           cw(j+1) = max(cw(i+1),l);                                             %     Aggregate column width
         end                                                                     %   <<
       end                                                                       % <<
@@ -597,7 +596,7 @@ classdef ibmqx
           f = '%'+sprintf("%ds",cw(1)); s = s  + sprintf(f,'');                 %     Output header of first row
         end                                                                     %   <<
         for j=1:size(om,2)                                                      %   Loop over op. matrix columns >>
-          t = ibmqx.sprintvec(ibmqx.int2binstr(j-1,N),'bra',mode,cw(j+1));      %     Print bra vector
+          t = qcirc.sprintvec(qcirc.int2binstr(j-1,N),'bra',mode,cw(j+1));      %     Print bra vector
           if j>1 || size(om,1)>1; s = s + sCD; end                              %     Output column delimiter
           s = s + t;                                                            %     Output column header
         end                                                                     %   <<
@@ -606,11 +605,11 @@ classdef ibmqx
       for i=1:size(om,1)                                                        % Loop over op. matrix rows >>
         s = s + sRH;                                                            %   Indent line
         if size(om,1)>1                                                         %   Not a bra >>
-          s = s + ibmqx.sprintvec(ibmqx.int2binstr(i-1,N),'ket',mode,cw(1));    %     Output row header
+          s = s + qcirc.sprintvec(qcirc.int2binstr(i-1,N),'ket',mode,cw(1));    %     Output row header
         end                                                                     %   <<
         for j=1:size(om,2)                                                      %   Loop over op. matrix columns >>
           if j>1 || size(om,1)>1; s = s + sCD; end                              %     Output column delimiter
-          s = s + ibmqx.sprintcmplx(om(i,j),prec,mode,cw(j+1));                 %     Output values
+          s = s + qcirc.sprintcmplx(om(i,j),prec,mode,cw(j+1));                 %     Output values
         end                                                                     %   <<
         if i<size(om,1); s = s + sRT; end                                       %   Output line break (except last row)
       end                                                                       % <<
@@ -628,7 +627,7 @@ classdef ibmqx
     function check(O)
       % Checks if an operator is unitary.
       %
-      %   ibmqx.check(O)
+      %   qcirc.check(O)
       %
       % arguments:
       %   O - The operator, a fockobj.
@@ -648,8 +647,8 @@ classdef ibmqx
     function O=opFromMatrix(om,name)
       % Builds an operator from an operator matrix.
       % 
-      %   O = ibmqx.opFromMatrix(om)
-      %   O = ibmqx.opFromMatrix(om,name)
+      %   O = qcirc.opFromMatrix(om)
+      %   O = qcirc.opFromMatrix(om,name)
       %
       % arguments:
       %   om   - A 2^n by 2^n operator matrix with n>0.
@@ -671,15 +670,15 @@ classdef ibmqx
         'Matrix dimension must be a positive integer power of 2.');             % ...
       
       % Make operator                                                           % -------------------------------------
-      B  = sector(ibmqx.basis^N,N);                                             % Get Fock space basis of N qubits
+      B  = sector(qcirc.basis^N,N);                                             % Get Fock space basis of N qubits
       om = [ zeros(1,2^N); om];                                                 % Insert heading row of zeros into om
       om = [ zeros(2^N+1,1) om];                                                % Insert heading col.of zeros into om
       O  = B.unrealize(om);                                                     % Convert matrix to Fock space operator
       if nargin>1; O.name = name; end                                           % Set operator name
 
       % Old code for 2x2 matrices                                               % -------------------------------------
-      %b0 = ibmqx.b0;                                                           % Get |0>
-      %b1 = ibmqx.b1;                                                           % Get |1>
+      %b0 = qcirc.b0;                                                           % Get |0>
+      %b1 = qcirc.b1;                                                           % Get |1>
       %O  = om(1,1)*(b0*b0') + om(1,2)*(b0*b1')...                              % Assemble operator point-wise
       %   + om(2,1)*(b1*b0') + om(2,2)*(b1*b1');                                % ...
     end
@@ -687,7 +686,7 @@ classdef ibmqx
     function om=opToMatrix(O)
       % Gets the operator matrix of a gate operator.
       % 
-      %   om = ibmqx.opToMatrix(O)
+      %   om = qcirc.opToMatrix(O)
       %
       % arguments:
       %   O  - The gate operator,a fockobj.
@@ -699,7 +698,7 @@ classdef ibmqx
       % See also opFromMatrix, fockobj
 
       [~,N] = fockbasis(O).getNumSectors();                                     % Get number of qubits
-      B  = sector(ibmqx.basis^N,N);                                             % Get Basis of Fock space sector
+      B  = sector(qcirc.basis^N,N);                                             % Get Basis of Fock space sector
       om = full(B.realize(O));                                                  % Get operator matrix
       switch O.getType()                                                        % Branch for fockobj type >>
         case fock.OBJ_LOP; om = om(2:end,2:end);                                %   Operator
@@ -789,8 +788,8 @@ classdef ibmqx
     function s=int2binstr(n,len)
       % Converts an non-negative integer to a binary number string.
       %
-      %   s = ibmqx.int2binstr(n)
-      %   s = ibmqx.int2binstr(n,len)
+      %   s = qcirc.int2binstr(n)
+      %   s = qcirc.int2binstr(n,len)
       %
       % arguments:
       %   n   - The integer.
@@ -818,7 +817,7 @@ classdef ibmqx
     function v=getOption(nvlist,name,default)
       % Gets an option value from a name-value list.
       %
-      %   v = ibmqx.getOption(name,default,list)
+      %   v = qcirc.getOption(name,default,list)
       %
       % arguments:
       %   nvlist  - The name-value list, a cell vector.
@@ -841,7 +840,7 @@ classdef ibmqx
     function checkOptions(nvlist,nlist)
       % Checks names in an option list.
       %
-      %   ibmqx.checkOptions(nvlist,nlist));
+      %   qcirc.checkOptions(nvlist,nlist));
       %
       % arguments:
       %   nvlist - A name-value list.

@@ -5,9 +5,7 @@ classdef qcirc
   %   Matthias Wolff, BTU Cottbus-Senftenberg
   %
   % TODO:
-  % - Implement barrier!
-  % - Implement swap gate: SWAP(N,i,j)!
-  % - Implement measurement with collapse(?)
+  %   https://github.com/matthias-wolff/FockBox/issues?q=is%3Aopen+is%3Aissue+project%3Amatthias-wolff%2FFockBox%2F1
   %
   % See also fockobj
   
@@ -254,7 +252,7 @@ classdef qcirc
         error(e.message);                                                       %   Error
       end                                                                       % <<
       try                                                                       % Try to >>
-        qcirc.check(O);                                                         %   Check operator
+        assert(qcirc.isUnitary(O));                                             %   Check operator
       catch e                                                                   % << Failed >>
         error('Matrix is not unitary.');                                        %   Error
       end                                                                       % <<
@@ -334,6 +332,102 @@ classdef qcirc
       %    the _first_ and q[0] is the _last_ factor.
     end
 
+    function O=booleanOp(tt,layout)
+      % Gate operator for a Boolean function.
+      %
+      %   O = qcirc.booleanOp(tt,layout)
+      %
+      % arguments:
+      %   tt - Truth table, a logical vector of 2^N elements. N denotes the 
+      %        number of arguments of the Boolean function.
+      %   s  - Character vector specifying the gate layout, a combination of
+      %        - 'i': Input qubit (exactly N times),
+      %        - 'o': Output qubit (exactly once), and
+      %        - '-': Run-through qubit (arbitrary count).
+      %        Qubits are ordered left to right, i.e., q[n]...q[0].
+      %
+      % returns:
+      %   O - The gate operator (a fockobj).
+      %
+      % examples:
+      %
+      %   - Toffoli gate operator: q[2] = q[1] AND q[0]
+      % 
+      %       tt = [ false false false true ];
+      %       O = qcirc.booleanOp(tt,'oii');
+      %
+      % See also fockobj
+      
+      % Check and prepare                                                       % -------------------------------------
+      % - Layout specifier                                                      % 
+      if ~isvector(layout) || ~ischar(layout)                                   % Check type of layout arg. >>
+        error('Gate layout specifier must be a character vector.');             %   Invalid -> error
+      end                                                                       % <<
+      iid = find(layout=='i');                                                  % Input qubit indices in layout spec.
+      oid = find(layout=='o');                                                  % Output qubit indices in layout spec.
+      rid = find(layout=='-');                                                  % Run-thru qubit indices in layout sp.
+      if length(oid) ~= 1                                                       % More or less than one output qubit >> 
+        error('Gate layout specifier must contain exactly one ''o''.');         %   Error
+      end                                                                       % <<
+      if length(iid)+length(oid)+length(rid) ~= length(layout)                  % Invalid characters in layout >>
+        error('Gate layout specifier must ''o'', ''i'', and ''-'' only.');      %   Error
+      end                                                                       % <<
+      
+      % - Thruth table                                                          % -------------------------------------
+      if ~isvector(tt) || ~islogical(tt)                                        % Check type of tt argument >>
+        error('Thruth table must be a logical vector.');                        %   Invalid -> error
+      end                                                                       % <<
+      Ntt = log2(length(tt));                                                   % # input qubits to function from tt
+      if Ntt ~= round(Ntt)                                                      % Not an integer power of 2 >>
+        error('Length of truth table vector must be an integer power of 2.');   %   Error
+      end                                                                       % <<
+      
+      % - Get and check numbers of qubits                                       % -------------------------------------
+      Nq = length(layout);                                                      % # qubits in gate
+      Ni = length(iid);                                                         % # input qubits to funct. from layout
+      if Ni ~= Ntt                                                              % Inconsistent number of inputs >>
+        error('Length of truth table vector does not match layout specifier.'); %   Error
+      end                                                                       % <<
+      
+      % Make map of input bit combinations to output values of Boolean function % -------------------------------------    
+      ttmap = containers.Map();                                                 % Map of bit combinations to truth val.
+      for i=1:length(tt)                                                        % Loop over truth table entries >>
+        key = qcirc.int2binstr(i-1,Ni);                                         %   Get bit combination of inputs
+        val = tt(i);                                                            %   Get value from truth table
+        ttmap = [ ttmap; containers.Map(key,val) ];                             %   Store key-value pair
+      end                                                                       % <<
+      
+      % Build operator element-wise                                             % ------------------------------------- 
+      O    = 0;                                                                 % Zero-initialize operator
+      tdel = repmat('§',1,Nq);                                                  % Aux. array of tensor prod. delimiters
+      for i=0:2^Nq-1                                                            % Loop over bit combinations >>
+        bc  = qcirc.int2binstr(i,Nq);                                           %   Get bit combination as char. array
+        in  = bc(iid);                                                          %   Get input bit combination
+        out = bc(oid);                                                          %   Get output bit
+        fprintf('''%s'', in: ''%s'', out: ''%s''',bc,in,out);
+        f   = ttmap(in);                                                        %   Get Boolean fnc. value for input
+        fprintf(', f: %i',f);
+        if f                                                                    %   Boolean function value is true >>
+          if out=='0'; out='1'; else; out='0'; end                              %     Flip output bit
+        end                                                                     %   <<
+        fprintf(', out <- %s',out);
+        ketid = bc;                                                             %   Ket <- bit combination
+        braid = bc; braid(oid)=out;                                             %   Bra <- bit comb. w/ modified output
+        fprintf(', |%s><%s|',ketid,braid);
+        ketid = reshape([ketid; tdel],1,2*Nq); ketid = ketid(1:2*Nq-1);         %   Make basis vector identifier of ket
+        braid = reshape([braid; tdel],1,2*Nq); braid = braid(1:2*Nq-1);         %   Make basis vector identifier of bra
+        ket = fockobj.bket(ketid);                                              %   Create ket
+        bra = fockobj.bket(braid)';                                             %   Create bra
+        fprintf(', |%s><%s|\n',ketid,braid);
+        O = O + ket*bra;                                                        %   Contribute element to operator
+      end                                                                       % <<
+      
+      % Final checks                                                            % -------------------------------------
+      assert(qcirc.isUnitary(O));                                               % Check newly created operator
+      qcirc.disp(O);
+      
+    end
+    
     % - Sub-space projectors
     
     function P=proj(s)
@@ -459,6 +553,24 @@ classdef qcirc
   %% == Auxiliary methods ==
   
   methods(Static)
+
+    function TF=isUnitary(O)
+      % Checks if an operator is unitary.
+      %
+      %   TF=qcirc.isUnitary(O)
+      %
+      % arguments:
+      %   O  - The operator, a fockobj.
+      %
+      % returns:
+      %   TF - true if the operator matrix is unitary, false otherwise.
+      %
+      % See also fockobj
+      
+      om = fockbasis(O).realize(O);                                             % Get operator matrix
+      om(1,:) = []; om(:,1) = [];                                               % Remove vacuum row and column
+      TF = all(all(om'*om-eye(length(om))<eps));                                % Test if unitary
+    end
 
     function disp(O)
       % Pretty-prints a quantum gate operator or a quantum state.
@@ -623,26 +735,6 @@ classdef qcirc
   %% == Auxiliary private methods ==
 
   methods(Static,Access=private)
-
-    function check(O)
-      % Checks if an operator is unitary.
-      %
-      %   qcirc.check(O)
-      %
-      % arguments:
-      %   O - The operator, a fockobj.
-      %
-      % returns:
-      %   nothing
-      %
-      % throws exception:
-      %   - If the operator is not unitary.
-      %
-      % See also fockobj
-      
-      D = inv(O)-O';                                                            % Compare inverse and adjoint operator
-      assert(all(all(fockbasis(D).realize(D)<eps)));                            % Must be equal to float precision
-    end
     
     function O=opFromMatrix(om,name)
       % Builds an operator from an operator matrix.

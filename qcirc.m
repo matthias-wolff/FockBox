@@ -332,10 +332,10 @@ classdef qcirc
       %    the _first_ and q[0] is the _last_ factor.
     end
 
-    function O=booleanOp(tt,layout)
-      % Gate operator for a Boolean function.
+    function O=BOOL(tt,layout)
+      % Universal Boolean gate operator.
       %
-      %   O = qcirc.booleanOp(tt,layout)
+      %   O = qcirc.BOOL(tt,layout)
       %
       % arguments:
       %   tt - Truth table, a logical vector of 2^N elements. N denotes the 
@@ -394,7 +394,7 @@ classdef qcirc
       for i=1:length(tt)                                                        % Loop over truth table entries >>
         key = qcirc.int2binstr(i-1,Ni);                                         %   Get bit combination of inputs
         val = tt(i);                                                            %   Get value from truth table
-        ttmap = [ ttmap; containers.Map(key,val) ];                             %   Store key-value pair
+        ttmap(key) = val;                                                       %   Store key-value pair
       end                                                                       % <<
       
       % Build operator element-wise                                             % ------------------------------------- 

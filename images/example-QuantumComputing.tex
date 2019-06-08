@@ -5,162 +5,95 @@
 % Windows: Needs ImageMagick to convert pdf to png!
 %
 %\documentclass{standalone}
-\documentclass[multi={tikzpicture,math}]{standalone}
-%\documentclass[multi={tikzpicture,math},convert={convertexe={convert},density=120}]{standalone}
+%\documentclass[multi={tikzpicture,math}]{standalone}
+\documentclass[multi={tikzpicture,math},convert={convertexe={convert},density=300}]{standalone}
 \usepackage{amsmath}
 \usepackage{xcolor}
 %\usepackage{tikz-quantumgates} % @ https://rawgit.com/matthias-wolff/tikz-quantumgates/master/tikz-quantumgates.sty
 \usepackage{../../../../btu/Publish/LaTeX/tikz-quantumgates/tikz-quantumgates}
 
 \begin{document}
-\begin{tikzpicture}
-  \qgateU[ibmqx]{0}{0}{U}
-\end{tikzpicture}
+% \begin{tikzpicture}
+%   \qgateU[ibmqx]{0}{0}{U}
+% \end{tikzpicture}
 
-% %% -- 0 -----------------------------------------------------------------------
+% %% -- 0 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateID[ibmqx]{0}{0}
+%   \qgateID{0}{0}
 % \end{tikzpicture}
-% %% -- 1 -----------------------------------------------------------------------
+% %% -- 1 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qwire[ibmqx]{0}{0}
+%   \qwire{0}{0}
 % \end{tikzpicture}
-% %% -- 2 -----------------------------------------------------------------------
+% %% -- 2 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateX[ibmqx]{0}{0}
+%   \qgateX{0}{0}
 % \end{tikzpicture}
-% %% -- 3 -----------------------------------------------------------------------
+% %% -- 3 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateY[ibmqx]{0}{0}
+%   \qgateY{0}{0}
 % \end{tikzpicture}
-% %% -- 4 -----------------------------------------------------------------------
+% %% -- 4 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateZ[ibmqx]{0}{0}
+%   \qgateZ{0}{0}
 % \end{tikzpicture}
-% %% -- 5 -----------------------------------------------------------------------
+% %% -- 5 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateH[ibmqx]{0}{0}
+%   \qgateH{0}{0}
 % \end{tikzpicture}
-% %% -- 6 -----------------------------------------------------------------------
+% %% -- 6 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateS[ibmqx]{0}{0}
+%   \qgateS{0}{0}
 % \end{tikzpicture}
-% %% -- 7 -----------------------------------------------------------------------
+% %% -- 7 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateSi[ibmqx]{0}{0}
+%   \qgateSi{0}{0}
 % \end{tikzpicture}
-% %% -- 8 -----------------------------------------------------------------------
+% %% -- 8 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateT[ibmqx]{0}{0}
+%   \qgateT{0}{0}
 % \end{tikzpicture}
-% %% -- 9 -----------------------------------------------------------------------
+% %% -- 9 ----------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateTi[ibmqx]{0}{0}
+%   \qgateTi{0}{0}
 % \end{tikzpicture}
-% %% -- 10 ----------------------------------------------------------------------
+% %% -- 10 ---------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateUa[ibmqx]{0}{0}
+%   \qgateUa*{0}{0}{$\lambda$}
 % \end{tikzpicture}
-% %% -- 11 ----------------------------------------------------------------------
+% %% -- 11 ---------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateUb[ibmqx]{0}{0}
+%   \qgateUb*{0}{0}{$\lambda,\!\phi$}
 % \end{tikzpicture}
-% %% -- 12 ----------------------------------------------------------------------
+% %% -- 12 ---------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateUc[ibmqx]{0}{0}
+%   \qgateUc*{0}{0}{$\lambda,\!\phi,\!\theta$}
 % \end{tikzpicture}
-% %% -- 13 ----------------------------------------------------------------------
+% %% -- 13 ---------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateCNX[ibmqx]{b}{0}{1}; \node[anchor=east] at (-0.6,1) {$q[0]$};
-%   \qgateCNC[ibmqx]{t}{0}{0}; \node[anchor=east] at (-0.6,0) {$q[1]$};
+%   \qgateCNX{b}{0}{1}; \qnode[anchor=east]{-0.5}{1}{$q[0]$};
+%   \qgateCNC{t}{0}{0}; \qnode[anchor=east]{-0.5}{0}{$q[1]$};
 % \end{tikzpicture}
-% %% -- 14 ----------------------------------------------------------------------
+% %% -- 14 ---------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateCNC[ibmqx]{b}{0}{1}; \node[anchor=east] at (-0.6,1) {$q[0]$};
-%   \qgateCNX[ibmqx]{t}{0}{0}; \node[anchor=east] at (-0.6,0) {$q[1]$};
+%   \qgateCNC{b}{0}{1}; \qnode[anchor=east]{-0.5}{1}{$q[0]$};
+%   \qgateCNX{t}{0}{0}; \qnode[anchor=east]{-0.5}{0}{$q[1]$};
 % \end{tikzpicture}
-% %% -- 14 ----------------------------------------------------------------------
+% %% -- 14 ---------------------------------------------------------------------
 % \begin{tikzpicture}
-%   \qgateCNC[ibmqx]{b}{0}{2}; \node[anchor=east] at (-0.6,2) {$q[0]$};
-%   \qgateCNR[ibmqx]   {0}{1}; \node[anchor=east] at (-0.6,1) {$q[1]$};
-%   \qgateCNX[ibmqx]{t}{0}{0}; \node[anchor=east] at (-0.6,0) {$q[2]$};
+%   \qgateCNC{b}{0}{2}; \qnode[anchor=east]{-0.5}{2}{$q[0]$};
+%   \qgateCNR   {0}{1}; \qnode[anchor=east]{-0.5}{1}{$q[1]$};
+%   \qgateCNX{t}{0}{0}; \qnode[anchor=east]{-0.5}{0}{$q[2]$};
 % \end{tikzpicture}
-% %% -- 15 ----------------------------------------------------------------------
-% \begin{tikzpicture}
-%   \qgateCNC[ibmqx]{b }{0}{2}; \node[anchor=east] at (-0.6,2) {$q[0]$};
-%   \qgateCNC[ibmqx]{bt}{0}{1}; \node[anchor=east] at (-0.6,1) {$q[1]$};
-%   \qgateCNX[ibmqx]{t }{0}{0}; \node[anchor=east] at (-0.6,0) {$q[2]$};
-% \end{tikzpicture}
-% % -- 16 ----------------------------------------------------------------------
-% \begin{tikzpicture}
-%   \definecolor{dkgreen}{HTML}{006600}
-%   \def\setslot#1{\pgfmathsetmacro\x{#1}}
-%   \def\prevslot{\pgfmathsetmacro\x{(\x-1)}}
-%   \def\I#1{\qwire[ibmqx]{\x}{#1}}
-%   \def\H#1{\qgateH[ibmqx]{\x}{#1}}
-%   \def\T#1{\qgateT[ibmqx]{\x}{#1}}
-%   \def\Ti#1{\qgateTi[ibmqx]{\x}{#1}}
-%   \def\CNOTa{% = \CNOTa
-%     \qwire[ibmqx]{\x}{3}%
-%     \qgateCNC[ibmqx]{b}{\x}{2}%
-%     \qgateCNX[ibmqx]{t}{\x}{1}%
-%   }
-%   \def\CNOTb{% = CNOT302
-%     \qgateCNC[ibmqx]{b}{\x}{3}%
-%     \qgateCNR[ibmqx]{\x}{2}%
-%     \qgateCNX[ibmqx]{t}{\x}{1}%
-%   }
-%   % Quantum circuit
-%   \setslot{23}
-%   \CNOTa              \prevslot  % slot 23
-%   \H{1}  \H{2}  \I{3} \prevslot  % slot 22
-%   \CNOTa              \prevslot  % slot 21
-%   \H{1}  \H{2}  \I{3} \prevslot  % slot 20
-%   \CNOTa              \prevslot  % slot 19
-%   \CNOTb              \prevslot  % slot 18
-%   \Ti{1} \I{2}  \T{3} \prevslot  % slot 17
-%   \CNOTb              \prevslot  % slot 16
-%   \CNOTa              \prevslot  % slot 15
-%   \H{1}  \H{2}  \I{3} \prevslot  % slot 14
-%   \CNOTa              \prevslot  % slot 13
-%   \H{1}  \H{2}  \I{3} \prevslot  % slot 12
-%   \CNOTa              \prevslot  % slot 11
-%   \H{1}  \I{2}  \I{3} \prevslot  % slot 10
-%   \T{1}  \T{2}  \I{3} \prevslot  % slot 9
-%   \CNOTb              \prevslot  % slot 8
-%   \Ti{1} \I{2}  \I{3} \prevslot  % slot 7
-%   \CNOTa              \prevslot  % slot 6
-%   \T{1}  \I{2}  \I{3} \prevslot  % slot 5
-%   \CNOTb              \prevslot  % slot 4
-%   \Ti{1} \I{2}  \I{3} \prevslot  % slot 3
-%   \CNOTa              \prevslot  % slot 2
-%   \H{1}  \I{2}  \I{3} \prevslot  % slot 1
-%   % Annotations
-%   \node[anchor=west] at (-0.1,3) {q[0]};
-%   \node[anchor=west] at (-0.1,2) {q[1]};
-%   \node[anchor=west] at (-0.1,1) {q[2]};
-%   \node[anchor=west,color=dkgreen] at (-0.1,0) {\sf slot};
-%   \foreach \x in {1,...,23} {%
-%     \node[color=dkgreen] at (\qgateSx*\x,0) {\sf\x};
-%   }
-%   \draw[very thick, dkgreen] (0.6*\qgateSx,3.4) -- (0.6*\qgateSx,3.7) --
-%     (18.4*\qgateSx,3.7) -- (18.4*\qgateSx,3.4);
-%   \node[dkgreen] at (9.5*\qgateSx,4)
-%     {\sf Toffoli gate with flips (see IBM QX tutorials)};
-%   \draw[very thick, dkgreen] (18.6*\qgateSx,3.4) -- (18.6*\qgateSx,3.7) --
-%     (23.4*\qgateSx,3.7) -- (23.4*\qgateSx,3.4);
-%   \node[dkgreen] at (21*\qgateSx,4)
-%     {\sf swap $q[1]$ and $q[2]$)};
-% \end{tikzpicture}
-% %% -- 17 ----------------------------------------------------------------------
+% %% -- 15 ---------------------------------------------------------------------
 % \begin{tikzpicture}
 %   \definecolor{dkgreen}{HTML}{006600}
 %   % Circuit
-%   \node[anchor=west] at (-1.3,1) {q[0]};
-%   \node[anchor=west] at (-1.2,-0.3) {c};
-%   \qzero [ibmqx]{0}{1}\qmeasBh[ibmqx]{1}{0}{0}
-%   \qgateH[ibmqx]{1}{1}\qmeasB [ibmqx]   {1}{0}
-%   \qmeasM[ibmqx]{2}{1}\qmeasMB[ibmqx]{0}{2}{0}
+%   \qnode[anchor=east]{-0.5}{ 1  }{q[0]};
+%   \qnode[anchor=east]{-0.5}{-0.3}{c};
+%   \qzero {0}{1}\qmeasBh{1}{0}{0}
+%   \qgateH{1}{1}\qmeasB    {1}{0}
+%   \qmeasM{2}{1}\qmeasMB{0}{2}{0}
 %   % Annotation
 %   \draw[very thick, dkgreen] (-0.4*\qgateSx,1.4) -- (-0.4*\qgateSx,1.7) --
 %     (0.4*\qgateSx,1.7) -- (0.4*\qgateSx,1.4);
@@ -172,19 +105,19 @@
 %   \draw[very thick, dkgreen] (1.6*\qgateSx,1.4) -- (1.6*\qgateSx,1.7) --
 %     (2.4*\qgateSx,1.7) -- (2.4*\qgateSx,1.4);
 %   \node[dkgreen,anchor=south west] at (1.5*\qgateSx,2.0) {\sf circuit representation};
-%   \node[dkgreen,anchor=south west] at (1.5*\qgateSx,1.65) {\sf of \texttt{ibmqx.probe}};
+%   \node[dkgreen,anchor=south west] at (1.5*\qgateSx,1.65) {\sf of \texttt{qcirc.probe}};
 % \end{tikzpicture}
-% %% -- 18 ----------------------------------------------------------------------
+% %% -- 16 ---------------------------------------------------------------------
 % \begin{tikzpicture}
 %   \definecolor{dkgreen}{HTML}{006600}
 %   % Circuit
-%   \node[anchor=west] at (-1.3,2) {q[0]};
-%   \node[anchor=west] at (-1.3,1) {q[1]};
-%   \node[anchor=west] at (-1.2,-0.3) {c};
-%   \qzero [ibmqx]{0}{2}\qzero [ibmqx]{0}{1}\qmeasBh[ibmqx]{2}{0}{0}
-%   \qgateH[ibmqx]{1}{2}\qgateH[ibmqx]{1}{1}\qmeasB [ibmqx]   {1}{0}
-%   \qmeasM[ibmqx]{2}{2}\qmeasR[ibmqx]{2}{1}\qmeasMB[ibmqx]{0}{2}{0}
-%   \qwire [ibmqx]{3}{2}\qmeasM[ibmqx]{3}{1}\qmeasMB[ibmqx]{1}{3}{0}
+%   \qnode[anchor=east]{-0.5}{ 2  }{q[0]};
+%   \qnode[anchor=east]{-0.5}{ 1  }{q[1]};
+%   \qnode[anchor=east]{-0.5}{-0.3}{c};
+%   \qzero {0}{2}\qzero {0}{1}\qmeasBh{2}{0}{0}
+%   \qgateH{1}{2}\qgateH{1}{1}\qmeasB    {1}{0}
+%   \qmeasM{2}{2}\qmeasR{2}{1}\qmeasMB{0}{2}{0}
+%   \qwire {3}{2}\qmeasM{3}{1}\qmeasMB{1}{3}{0}
 %   % Annotation
 %   \draw[very thick, dkgreen] (-0.4*\qgateSx,2.4) -- (-0.4*\qgateSx,2.7) --
 %     (0.4*\qgateSx,2.7) -- (0.4*\qgateSx,2.4);
@@ -196,20 +129,20 @@
 %   \draw[very thick, dkgreen] (1.6*\qgateSx,2.4) -- (1.6*\qgateSx,2.7) --
 %     (3.4*\qgateSx,2.7) -- (3.4*\qgateSx,2.4);
 %   \node[dkgreen,anchor=south] at (2.5*\qgateSx,3.0) {\sf circuit representation};
-%   \node[dkgreen,anchor=south] at (2.5*\qgateSx,2.65) {\sf of \texttt{ibmqx.probe}};
+%   \node[dkgreen,anchor=south] at (2.5*\qgateSx,2.65) {\sf of \texttt{qcirc.probe}};
 % \end{tikzpicture}
-% %% -- 19 ----------------------------------------------------------------------
+% %% -- 17 ---------------------------------------------------------------------
 % \begin{tikzpicture}
 %   \definecolor{dkgreen}{HTML}{006600}
 %   % Circuit
-%   \node[anchor=west] at (-1.3,2) {q[0]};
-%   \node[anchor=west] at (-1.3,1) {q[1]};
-%   \node[anchor=west] at (-1.2,-0.3) {c};
-%   \qzero   [ibmqx]   {0}{2}\qzero   [ibmqx]   {0}{1}\qmeasBh[ibmqx]{2}{0}{0}
-%   \qwire   [ibmqx]   {1}{2}\qgateH  [ibmqx]   {1}{1}\qmeasB [ibmqx]   {1}{0}
-%   \qgateCNX[ibmqx]{b}{2}{2}\qgateCNC[ibmqx]{t}{2}{1}\qmeasB [ibmqx]   {2}{0}
-%   \qmeasM  [ibmqx]   {3}{2}\qmeasR  [ibmqx]   {3}{1}\qmeasMB[ibmqx]{0}{3}{0}
-%   \qwire   [ibmqx]   {4}{2}\qmeasM  [ibmqx]   {4}{1}\qmeasMB[ibmqx]{1}{4}{0}
+%   \qnode[anchor=east]{-0.5}{ 2  }{q[0]};
+%   \qnode[anchor=east]{-0.5}{ 1  }{q[1]};
+%   \qnode[anchor=east]{-0.5}{-0.3}{c};
+%   \qzero      {0}{2}\qzero      {0}{1}\qmeasBh{2}{0}{0}
+%   \qwire      {1}{2}\qgateH     {1}{1}\qmeasB    {1}{0}
+%   \qgateCNX{b}{2}{2}\qgateCNC{t}{2}{1}\qmeasB    {2}{0}
+%   \qmeasM     {3}{2}\qmeasR     {3}{1}\qmeasMB{0}{3}{0}
+%   \qwire      {4}{2}\qmeasM     {4}{1}\qmeasMB{1}{4}{0}
 %   % Annotation
 %   \draw[very thick, dkgreen] (-0.4*\qgateSx,2.4) -- (-0.4*\qgateSx,2.7) --
 %     (0.4*\qgateSx,2.7) -- (0.4*\qgateSx,2.4);
@@ -221,7 +154,75 @@
 %   \draw[very thick, dkgreen] (2.6*\qgateSx,2.4) -- (2.6*\qgateSx,2.7) --
 %     (4.4*\qgateSx,2.7) -- (4.4*\qgateSx,2.4);
 %   \node[dkgreen,anchor=south] at (3.5*\qgateSx,3.0) {\sf circuit representation};
-%   \node[dkgreen,anchor=south] at (3.5*\qgateSx,2.65) {\sf of \texttt{ibmqx.probe}};
+%   \node[dkgreen,anchor=south] at (3.5*\qgateSx,2.65) {\sf of \texttt{qcirc.probe}};
 % \end{tikzpicture}
+% %% -- 18 ---------------------------------------------------------------------
+% \begin{tikzpicture}
+%   \qgateCNC{b }{0}{2}; \qnode[anchor=east]{-0.5}{2}{$q[0]$};
+%   \qgateCNC{bt}{0}{1}; \qnode[anchor=east]{-0.5}{1}{$q[1]$};
+%   \qgateCNX{t }{0}{0}; \qnode[anchor=east]{-0.5}{0}{$q[2]$};
+% \end{tikzpicture}
+% %% -- 19 ---------------------------------------------------------------------
+\begin{tikzpicture}
+  \definecolor{dkgreen}{HTML}{006600}
+  \def\setslot#1{\pgfmathsetmacro\x{#1}}
+  \def\prevslot{\pgfmathsetmacro\x{(\x-1)}}
+  \def\I#1{\qwire{\x}{#1}}
+  \def\H#1{\qgateH{\x}{#1}}
+  \def\T#1{\qgateT{\x}{#1}}
+  \def\Ti#1{\qgateTi{\x}{#1}}
+  \def\CNOTa{% = \CNOTa
+    \qwire{\x}{3}%
+    \qgateCNC{b}{\x}{2}%
+    \qgateCNX{t}{\x}{1}%
+  }
+  \def\CNOTb{% = CNOT302
+    \qgateCNC{b}{\x}{3}%
+    \qgateCNR{\x}{2}%
+    \qgateCNX{t}{\x}{1}%
+  }
+  % Quantum circuit
+  \setslot{23}
+  \CNOTa              \prevslot  % slot 23
+  \H{1}  \H{2}  \I{3} \prevslot  % slot 22
+  \CNOTa              \prevslot  % slot 21
+  \H{1}  \H{2}  \I{3} \prevslot  % slot 20
+  \CNOTa              \prevslot  % slot 19
+  \CNOTb              \prevslot  % slot 18
+  \Ti{1} \I{2}  \T{3} \prevslot  % slot 17
+  \CNOTb              \prevslot  % slot 16
+  \CNOTa              \prevslot  % slot 15
+  \H{1}  \H{2}  \I{3} \prevslot  % slot 14
+  \CNOTa              \prevslot  % slot 13
+  \H{1}  \H{2}  \I{3} \prevslot  % slot 12
+  \CNOTa              \prevslot  % slot 11
+  \H{1}  \I{2}  \I{3} \prevslot  % slot 10
+  \T{1}  \T{2}  \I{3} \prevslot  % slot 9
+  \CNOTb              \prevslot  % slot 8
+  \Ti{1} \I{2}  \I{3} \prevslot  % slot 7
+  \CNOTa              \prevslot  % slot 6
+  \T{1}  \I{2}  \I{3} \prevslot  % slot 5
+  \CNOTb              \prevslot  % slot 4
+  \Ti{1} \I{2}  \I{3} \prevslot  % slot 3
+  \CNOTa              \prevslot  % slot 2
+  \H{1}  \I{2}  \I{3} \prevslot  % slot 1
+  % Annotations
+  \qnode[anchor=east]{0.5}{3}{q[0]};
+  \qnode[anchor=east]{0.5}{2}{q[1]};
+  \qnode[anchor=east]{0.5}{1}{q[2]};
+  \qnode[anchor=east,color=dkgreen]{0.5}{0}{\sf slot};
+  \foreach \x in {1,...,23} {%
+    \node[color=dkgreen] at (\qgateSx*\x,0) {\sf\x};
+  }
+  \draw[very thick, dkgreen] (0.6*\qgateSx,3.4) -- (0.6*\qgateSx,3.7) --
+    (18.4*\qgateSx,3.7) -- (18.4*\qgateSx,3.4);
+  \node[dkgreen] at (9.5*\qgateSx,4)
+    {\sf Toffoli gate with flips (see IBM Q Experience tutorials)};
+  \draw[very thick, dkgreen] (18.6*\qgateSx,3.4) -- (18.6*\qgateSx,3.7) --
+    (23.4*\qgateSx,3.7) -- (23.4*\qgateSx,3.4);
+  \node[dkgreen] at (21*\qgateSx,4)
+    {\sf swap $q[1]$ and $q[2]$)};
+\end{tikzpicture}
+
 
 \end{document}

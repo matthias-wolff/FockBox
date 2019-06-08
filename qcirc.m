@@ -404,27 +404,21 @@ classdef qcirc
         bc  = qcirc.int2binstr(i,Nq);                                           %   Get bit combination as char. array
         in  = bc(iid);                                                          %   Get input bit combination
         out = bc(oid);                                                          %   Get output bit
-        fprintf('''%s'', in: ''%s'', out: ''%s''',bc,in,out);
         f   = ttmap(in);                                                        %   Get Boolean fnc. value for input
-        fprintf(', f: %i',f);
         if f                                                                    %   Boolean function value is true >>
           if out=='0'; out='1'; else; out='0'; end                              %     Flip output bit
         end                                                                     %   <<
-        fprintf(', out <- %s',out);
         ketid = bc;                                                             %   Ket <- bit combination
         braid = bc; braid(oid)=out;                                             %   Bra <- bit comb. w/ modified output
-        fprintf(', |%s><%s|',ketid,braid);
         ketid = reshape([ketid; tdel],1,2*Nq); ketid = ketid(1:2*Nq-1);         %   Make basis vector identifier of ket
         braid = reshape([braid; tdel],1,2*Nq); braid = braid(1:2*Nq-1);         %   Make basis vector identifier of bra
         ket = fockobj.bket(ketid);                                              %   Create ket
         bra = fockobj.bket(braid)';                                             %   Create bra
-        fprintf(', |%s><%s|\n',ketid,braid);
         O = O + ket*bra;                                                        %   Contribute element to operator
       end                                                                       % <<
       
       % Final checks                                                            % -------------------------------------
-      assert(qcirc.isUnitary(O));                                               % Check newly created operator
-      qcirc.disp(O);
+      assert(qcirc.isUnitary(O)); % Remove later                                % Check newly created operator
       
     end
     

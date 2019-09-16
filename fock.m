@@ -116,6 +116,7 @@
       %   fock.addFockBoxPaths()
       %
       p = strrep(mfilename('fullpath'),mfilename,'');
+      addpath(p);
       addpath([p 'example_utils']);
       addpath([p 'examples']);
       addpath([p 'external']);

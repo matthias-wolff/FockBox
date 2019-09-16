@@ -190,7 +190,7 @@ classdef Maze < handle
       if obj.mmp.isCheeseAt(xn,yn); c = fockobj.bket('1C'); end                 % ...
       g = fockobj.bket('0G');                                                   % Make water ket
       if obj.mmp.isWaterAt(xn,yn); g = fockobj.bket('1G'); end                  % ...
-      o = [x y c g];                                                            % Make observaetion ket
+      o = [x y c g];                                                            % Make observation ket
     end
     
   end

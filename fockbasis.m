@@ -292,6 +292,49 @@ classdef fockbasis < matlab.mixin.CustomDisplay
       r = fockbasis([ a.bidm.keys b.bidm.keys ]);                               % Create sum space
     end
 
+    function r=minus(a,b)
+      % Vector difference (overloads '-' operator). The vector difference is 
+      % the relative complement of b wrt. a. In other words: The result will
+      % contain all basis vectors which are element of a but NOT element of b.
+      %
+      %   r=minus(a,b)
+      %   r=a-b
+      %
+      % arguments:
+      %   a - First operand, a Fock basis object.
+      %   b - Second operand, a Fock basis object.
+      %
+      % returns:
+      %   r - The replative complement of b wrt. a.
+      %
+      % throws exception:
+      %   - If either operand is not a scalar of type 'fockbasis'.
+      assert(isscalar(a)&&isa(a,'fockbasis'),...                                % Check if a is a fockbasis scalar
+        'a','Must be a scalar of type ''fockbasis''');                          % ...
+      assert(isscalar(b)&&isa(b,'fockbasis'),...                                % Check if b is a fockbasis scalar
+        'b','Must be a scalar of type ''fockbasis''');                          % ...
+      a.check();                                                                % Check argument #1
+      b.check();                                                                % Check argument #2
+      assert(a.isCanonical()&&b.isCanonical, ...                                % Not implemented for custom basis
+        fock.ERR_NOTIMPL, 'Custom basis vectors');                              % ...
+
+      r = fockbasis();
+      for i=2:a.getDim()
+        ba = a.getBvecId(i);
+        bFoundInA = false;
+        for j=2:b.getDim()
+          bb = b.getBvecId(j);
+          if strcmp(ba,bb)
+            bFoundInA = true;
+            break;
+          end
+        end
+        if ~bFoundInA
+          r = r + fockbasis(ba);
+        end
+      end
+    end
+    
     function r=horzcat(a,varargin)
       % Kronecker tensor product (overloads '[...]' operator).
       %
@@ -385,50 +428,6 @@ classdef fockbasis < matlab.mixin.CustomDisplay
       assert(isscalar(b)&&~mod(b,1)&&b>0,fock.ERR_BADARG, ...                   % Arg. b must be one positive integer
         'b', 'Must be a positive integer scalar.');                             % ...
       r = a; for i=2:b; r = kron(r,a); end                                      % Compute b-th order tensor product
-    end
-
-    function s=frb(f,r,p)
-    % TODO: add documentation
-
-      assert(isscalar(f)&&isa(f,'fockbasis'),fock.ERR_BADARG, ...               % Check if f is a fockbasis scalar
-        'f','Must be a scalar of type ''fockbasis''');                          % ...
-      f.check();                                                                % Check argument #1
-      keysf = f.bidm.keys;                                                      % Get base identifiers f
-      assert(isscalar(r)&&isa(r,'fockbasis'),fock.ERR_BADARG, ...               % Check if r is a fockbasis
-        'r','Must be a scalar of type ''fockbasis''');                          % ...
-      r.check();                                                                % Check argument #2
-      assert(isscalar(p)&&~mod(p,1)&&p>0,fock.ERR_BADARG, ...                   % Arg. p must be one positive integer
-        'p', 'Must be a positive integer scalar.');                             % ...
-      nf    = length(keysf);                                                    % Get number of b. vec. ids. in f
-      keyso = r.bidm.keys;                                                      % Keep copy of base identifiers r
-      no    = length(keyso);                                                    % Get number of b. vec. ids. in r
-      r     = r^p;                                                              % Compute all role combinations as r
-      keysr = r.bidm.keys;                                                      % Get basis vector identifiers r
-      nr    = length(keysr);                                                    % Get number of b. vec. ids. in r
-      keyss = cell(1,(nf-1)*nr+no);                                             % Pre-allocate resulting list
-      c     = 0;                                                                % Initialize corrections
-      for j=1:nf                                                                % Loop over basis vector ids. f >>
-        bidf = keysf{j};                                                        %   Get basis vector identifier f
-        vacf = all(bidf==fock.C_BVAC);                                          %   Detect vacuum basis vector id.
-        if vacf                                                                 %   id. f is vacuum >>
-          c = -1;                                                               %     skip and start correction
-        else                                                                    %   << id. f is not vacuum >>
-          for k=1:nr                                                            %     Loop over basis vector ids. r >>
-            bidr = keysr{k};                                                    %       Get basis vector identifier r   
-            vacr = all(bidr==fock.C_BVAC);                                      %       Detect vacuum basis vector id.
-            if vacr                                                             %       id. r is vacuum >>
-              bids = bidf;                                                      %         Result is id. f
-            else                                                                %       << both not vacuum >>
-              bids = [ bidf fock.C_TDEL bidr ];                                 %         Concatenate ids f and r.
-            end                                                                 %       <<
-            keyss{(j-1+c)*nr+k} = bids;                                         %       Store resulting basis vec. id.
-          end                                                                   %     <<
-        end                                                                     %  <<
-      end                                                                       % <<
-      for j=1:no                                                                % Loop over basis vector ids. of copy >>
-        keyss{(nf-1)*nr+j} = keyso{j};                                          %   Store basis vec. id.
-      end                                                                       % <<
-      s = fockbasis(keyss);                                                     % Create tensor product space
     end
 
   end
